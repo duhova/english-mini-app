@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Tests</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .level-buttons {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .level-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .beginner {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .intermediate {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .advanced {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .test-container {
+            display: none;
+        }
+
+        .question {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            padding: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .option-btn.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .option-btn.correct {
+            border-color: #43e97b;
+            background: #e8f9f0;
+        }
+
+        .option-btn.wrong {
+            border-color: #fa709a;
+            background: #fff0f3;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-btn.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .result h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .score {
+            font-size: 64px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .result-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .emoji {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 English Grammar Tests</h1>
+            <p>Choose your level and test your English skills!</p>
+        </div>
+
+        <div id="levelSelect" class="level-buttons">
+            <button class="level-btn beginner" onclick="startTest('Начальный')">
+                <span>🎯</span> Начальный уровень (Beginner)
+            </button>
+            <button class="level-btn intermediate" onclick="startTest('Средний')">
+                <span>⚡</span> Средний уровень (Intermediate)
+            </button>
+            <button class="level-btn advanced" onclick="startTest('Продвинутый')">
+                <span>🚀</span> Продвинутый уровень (Advanced)
+            </button>
+        </div>
+
+        <div id="testContainer" class="test-container">
+            <div class="progress">
+                <span id="currentQuestion">1</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span id="totalQuestions">10</span>
+            </div>
+
+            <div class="question" id="questionText"></div>
+
+            <div class="options" id="optionsContainer"></div>
+
+            <div class="navigation">
+                <button class="nav-btn secondary" onclick="previousQuestion()" id="prevBtn">← Previous</button>
+                <button class="nav-btn primary" onclick="nextQuestion()" id="nextBtn">Next →</button>
+                <button class="nav-btn primary" onclick="submitTest()" id="submitBtn" style="display: none;">Submit Test</button>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="result">
+            <div class="emoji" id="resultEmoji">🎉</div>
+            <h2>Test Completed!</h2>
+            <div class="score" id="scoreText">0/10</div>
+            <div class="result-text" id="resultText"></div>
+            <button class="back-btn" onclick="goBackToLevels()">← Back to Levels</button>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentLevel = '';
+        let currentTest = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let score = 0;
+
+        // Mock test data - in real app, fetch from your API
+        const testData = {
+            'Начальный': [
+                {
+                    question: "Choose the correct form: She _____ to school every day.",
+                    options: ["go", "goes", "going"],
+                    correct: 1
+                },
+                {
+                    question: "Choose correct: I _____ coffee every morning.",
+                    options: ["drinks", "drink", "am drinking"],
+                    correct: 1
+                },
+                {
+                    question: "Fill: He _____ his homework now. (present continuous)",
+                    options: ["do", "does", "is doing"],
+                    correct: 2
+                }
+            ],
+            'Средний': [
+                {
+                    question: "Choose the correct tense: I _____ here for two hours.",
+                    options: ["have been", "am", "was"],
+                    correct: 0
+                },
+                {
+                    question: "Reported speech: He said 'I am tired' -> He said that he _____ tired.",
+                    options: ["was", "is", "has been"],
+                    correct: 0
+                }
+            ],
+            'Продвинутый': [
+                {
+                    question: "Choose the correct cleft sentence: It was John _____ broke the vase.",
+                    options: ["who", "which", "that"],
+                    correct: 0
+                },
+                {
+                    question: "Inversion: Rarely _____ such a mistake.",
+                    options: ["had I seen", "I had seen", "did I see"],
+                    correct: 0
+                }
+            ]
+        };
+
+        function startTest(level) {
+            currentLevel = level;
+            currentTest = testData[level] || [];
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            score = 0;
+
+            document.getElementById('levelSelect').style.display = 'none';
+            document.getElementById('testContainer').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+
+            loadQuestion();
+            updateProgress();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= currentTest.length) {
+                showResults();
+                return;
+            }
+
+            const question = currentTest[currentQuestionIndex];
+            document.getElementById('questionText').textContent = `Q${currentQuestionIndex + 1}: ${question.question}`;
+            document.getElementById('totalQuestions').textContent = currentTest.length;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                if (userAnswers[currentQuestionIndex] === index) {
+                    button.classList.add('selected');
+                }
+                button.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+                button.onclick = () => selectOption(index);
+                optionsContainer.appendChild(button);
+            });
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('nextBtn').style.display = currentQuestionIndex < currentTest.length - 1 ? 'block' : 'none';
+            document.getElementById('submitBtn').style.display = currentQuestionIndex === currentTest.length - 1 ? 'block' : 'none';
+        }
+
+        function selectOption(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+
+            // Update UI
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, idx) => {
+                btn.classList.remove('selected');
+                if (idx === optionIndex) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+                updateProgress();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentTest.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / currentTest.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function submitTest() {
+            // Calculate score
+            score = 0;
+            currentTest.forEach((question, index) => {
+                if (userAnswers[index] === question.correct) {
+                    score++;
+                }
+            });
+
+            showResults();
+
+            // Send results back to bot
+            const resultData = {
+                level: currentLevel,
+                score: score,
+                total: currentTest.length,
+                timestamp: new Date().toISOString()
+            };
+
+            // Uncomment when ready to send data back
+            // tg.sendData(JSON.stringify(resultData));
+
+            // For now, log to console
+            console.log('Test results:', resultData);
+        }
+
+        function showResults() {
+            document.getElementById('testContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+
+            document.getElementById('scoreText').textContent = `${score}/${currentTest.length}`;
+
+            const percentage = (score / currentTest.length) * 100;
+            let emoji = '😊';
+            let message = 'Good job!';
+
+            if (percentage >= 80) {
+                emoji = '🎉';
+                message = 'Excellent work! You\'re a star!';
+            } else if (percentage >= 60) {
+                emoji = '👍';
+                message = 'Well done! Keep practicing!';
+            } else if (percentage >= 40) {
+                emoji = '📚';
+                message = 'Not bad! Review the material and try again!';
+            } else {
+                emoji = '💪';
+                message = 'Keep learning! Practice makes perfect!';
+            }
+
+            document.getElementById('resultEmoji').textContent = emoji;
+            document.getElementById('resultText').textContent = message;
+        }
+
+        function goBackToLevels() {
+            document.getElementById('levelSelect').style.display = 'grid';
+            document.getElementById('testContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+        }
+
+        // Initialize
+        tg.ready();
+    </script>
+</body>
+</html>
