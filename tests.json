@@ -1,0 +1,978 @@
+{
+  "Начальный": [
+    {
+      "question": "Choose the correct form: She _____ to school every day.",
+      "options": [
+        "go",
+        "goes",
+        "going"
+      ],
+      "correct": 1,
+      "explanation": "Вариант B правильный, так как для he/she/it в Present Simple используется окончание -s"
+    },
+    {
+      "question": "Choose correct: I _____ coffee every morning.",
+      "options": [
+        "drinks",
+        "drink",
+        "am drinking"
+      ],
+      "correct": 1,
+      "explanation": "Вариант B правильный, так как для I/you/we/they в Present Simple не используется окончание -s"
+    },
+    {
+      "question": "Fill: He _____ his homework now. (present continuous)",
+      "options": [
+        "do",
+        "does",
+        "is doing"
+      ],
+      "correct": 2,
+      "explanation": "Вариант C правильный, так как для действий в момент речи используется Present Continuous (am/is/are + V-ing)"
+    },
+    {
+      "question": "Choose article: _____ apple a day keeps the doctor away.",
+      "options": [
+        "An",
+        "A",
+        "The"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Select plural: one cat, two _____.",
+      "options": [
+        "cats",
+        "cat",
+        "cates"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: They _____ in London last year.",
+      "options": [
+        "lived",
+        "live",
+        "are living"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Which is correct: I _____ a book now.",
+      "options": [
+        "reading",
+        "reads",
+        "am reading"
+      ],
+      "correct": 2,
+      "explanation": "Правильный ответ: C. Третий вариант правильный"
+    },
+    {
+      "question": "Choose: Do you _____ tea?",
+      "options": [
+        "drink",
+        "drinks",
+        "drinking"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose preposition: She is good _____ math.",
+      "options": [
+        "in",
+        "at",
+        "on"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Choose correct pronoun: This is _____ pen.",
+      "options": [
+        "me",
+        "my",
+        "mine"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Fill: We _____ to music yesterday.",
+      "options": [
+        "listen",
+        "listened",
+        "listening"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Choose: How _____ are you?",
+      "options": [
+        "old",
+        "older",
+        "the old"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Select: I have _____ orange.",
+      "options": [
+        "a",
+        "an",
+        "the"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Negation: He _____ like bananas.",
+      "options": [
+        "doesn't",
+        "don't",
+        "isn't"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Question: _____ you speak English?",
+      "options": [
+        "Do",
+        "Does",
+        "Are"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: I _____ two sisters.",
+      "options": [
+        "have",
+        "has",
+        "having"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Time phrase: I _____ at 7 pm yesterday.",
+      "options": [
+        "arrived",
+        "arrive",
+        "arriving"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: She is _____ than me.",
+      "options": [
+        "tall",
+        "taller",
+        "tallest"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Pick verb: We _____ TV every evening.",
+      "options": [
+        "watch",
+        "watches",
+        "watching"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: _____ you like ice-cream?",
+      "options": [
+        "Do",
+        "Does",
+        "Are"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Fill correct form: He _____ his teeth now.",
+      "options": [
+        "brush",
+        "brushes",
+        "is brushing"
+      ],
+      "correct": 2,
+      "explanation": "Правильный ответ: C. Третий вариант правильный"
+    },
+    {
+      "question": "Choose word: I can _____ a song.",
+      "options": [
+        "sing",
+        "sings",
+        "sang"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Past of 'go' is:",
+      "options": [
+        "goed",
+        "went",
+        "gone"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Choose countable: _____ water",
+      "options": [
+        "a",
+        "some",
+        "many"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Which is correct: She _____ to the cinema tomorrow.",
+      "options": [
+        "goes",
+        "is going",
+        "went"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Select correct plural: child -> _____.",
+      "options": [
+        "childs",
+        "children",
+        "childes"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Choose question form: _____ he like football?",
+      "options": [
+        "Do",
+        "Does",
+        "Is"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Fill: I _____ breakfast at 8.",
+      "options": [
+        "have",
+        "has",
+        "had"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose pronoun: This is _____ book (belonging to me).",
+      "options": [
+        "my",
+        "mine",
+        "me"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Choose: They _____ not here now.",
+      "options": [
+        "are",
+        "is",
+        "am"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Fill: I _____ been to Paris. (present perfect)",
+      "options": [
+        "have",
+        "has",
+        "had"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: She often _____ to music.",
+      "options": [
+        "listens",
+        "listen",
+        "listening"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    }
+  ],
+  "Средний": [
+    {
+      "question": "Choose the correct tense: I _____ here for two hours.",
+      "options": [
+        "have been",
+        "am",
+        "was"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Reported speech: He said 'I am tired' -> He said that he _____ tired.",
+      "options": [
+        "was",
+        "is",
+        "has been"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose conditional: If I _____ money, I would travel.",
+      "options": [
+        "had",
+        "have",
+        "will have"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct passive: The letter _____ by Tom yesterday.",
+      "options": [
+        "was sent",
+        "sent",
+        "is sent"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose modal: You _____ see a doctor if you are ill.",
+      "options": [
+        "should",
+        "mustn't",
+        "needn't"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Fill: She _____ to finish it by Friday. (future perfect)",
+      "options": [
+        "will have managed",
+        "will manage",
+        "manages"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose tense: By next year I _____ my degree.",
+      "options": [
+        "will have finished",
+        "will finish",
+        "finished"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Correct preposition: He apologized _____ being late.",
+      "options": [
+        "for",
+        "to",
+        "about"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: I suggest that he _____ earlier.",
+      "options": [
+        "arrive",
+        "arrives",
+        "arrived"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Relative clause: The man _____ called you is here.",
+      "options": [
+        "who",
+        "whom",
+        "which"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose phrasal verb: She _____ up smoking.",
+      "options": [
+        "gave",
+        "gave up",
+        "gave out"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Question tag: You like coffee, _____?",
+      "options": [
+        "don't you",
+        "do you",
+        "aren't you"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: Had I known, I _____ acted differently.",
+      "options": [
+        "would have",
+        "would",
+        "will have"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Gerund vs infinitive: I enjoy _____ novels.",
+      "options": [
+        "reading",
+        "to read",
+        "read"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct comparative: This test is _____ than the last one.",
+      "options": [
+        "easier",
+        "more easy",
+        "most easy"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose tense: They _____ for two hours when he arrived.",
+      "options": [
+        "had been working",
+        "have been working",
+        "were working"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Preposition: She is keen _____ tennis.",
+      "options": [
+        "on",
+        "in",
+        "about"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Passive: The cake _____ by Mary every weekend.",
+      "options": [
+        "is baked",
+        "bakes",
+        "was baked"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose modal perfect: He _____ have stolen it (I'm sure).",
+      "options": [
+        "must",
+        "might",
+        "can"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Reported question: 'Where do you live?' -> He asked me where I _____.",
+      "options": [
+        "lived",
+        "live",
+        "has lived"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: I would rather you _____ here tomorrow.",
+      "options": [
+        "were",
+        "are",
+        "will be"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Fill correct: She insisted that he _____ at once.",
+      "options": [
+        "leave",
+        "leaves",
+        "left"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct article: She is _____ best student.",
+      "options": [
+        "the",
+        "a",
+        "an"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Tense: I wish I _____ Spanish fluently.",
+      "options": [
+        "could speak",
+        "can speak",
+        "could spoke"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct form: He recommended _____ earlier.",
+      "options": [
+        "arriving",
+        "to arrive",
+        "arrive"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Condition: If she _____ earlier, she would have seen him.",
+      "options": [
+        "had come",
+        "comes",
+        "came"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose subjunctive: It is important that he _____ here.",
+      "options": [
+        "be",
+        "is",
+        "was"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Form: She had her hair _____ last week.",
+      "options": [
+        "cut",
+        "cutting",
+        "to cut"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose preposition: She is responsible _____ the team.",
+      "options": [
+        "for",
+        "to",
+        "of"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose tense: They _____ finished before noon.",
+      "options": [
+        "had",
+        "have",
+        "were"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose mood: If I were you, I _____ accept.",
+      "options": [
+        "would",
+        "will",
+        "should"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Infinitive perfect: He is believed _____ the job.",
+      "options": [
+        "to have done",
+        "to do",
+        "having done"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    }
+  ],
+  "Продвинутый": [
+    {
+      "question": "Choose the correct cleft sentence: It was John _____ broke the vase.",
+      "options": [
+        "who",
+        "which",
+        "that"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Inversion: Rarely _____ such a mistake.",
+      "options": [
+        "had I seen",
+        "I had seen",
+        "did I see"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Perfect continuous: She _____ for three hours before lunch.",
+      "options": [
+        "had been working",
+        "has been working",
+        "was working"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: Were he _____, he would agree.",
+      "options": [
+        "here",
+        "there",
+        "present"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Non-defining clause: My brother, _____ lives in Berlin, is a chef.",
+      "options": [
+        "who",
+        "which",
+        "that"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Mixed conditional: If he had studied, he _____ now.",
+      "options": [
+        "would be",
+        "would have",
+        "will be"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Subjunctive past: If I _____ you, I would accept.",
+      "options": [
+        "were",
+        "was",
+        "am"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Nominalisation: Transform 'They decided to investigate' -> 'Their _____ was to investigate.'",
+      "options": [
+        "decision",
+        "decide",
+        "deciding"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Advanced passive: The project _____ to have been completed.",
+      "options": [
+        "is believed",
+        "believes",
+        "was believed"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Ellipsis: I'd rather you _____ (go) now.",
+      "options": [
+        "went",
+        "go",
+        "gone"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct collocation: He takes _____ interest in science.",
+      "options": [
+        "a keen",
+        "keen a",
+        "the keen"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Future in the past: He said he _____ the next week.",
+      "options": [
+        "would arrive",
+        "will arrive",
+        "arrived"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Causative: She had her car _____ last week.",
+      "options": [
+        "repaired",
+        "repair",
+        "to repair"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: Hardly had I _____ home when it started raining.",
+      "options": [
+        "reached",
+        "reach",
+        "reaching"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Reduced relative: The people _____ invited were experts.",
+      "options": [
+        "who were",
+        "which were",
+        "that were"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Fronting: Here _____ the papers you asked for.",
+      "options": [
+        "are",
+        "is",
+        "were"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: He would sooner you _____ now.",
+      "options": [
+        "went",
+        "go",
+        "have gone"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Modal perfect: She _____ have left earlier (I suppose).",
+      "options": [
+        "may",
+        "may have",
+        "must have"
+      ],
+      "correct": 2,
+      "explanation": "Правильный ответ: C. Третий вариант правильный"
+    },
+    {
+      "question": "Advanced conditional: If he _____ the skill, he would have helped.",
+      "options": [
+        "had had",
+        "has had",
+        "had"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: 'No sooner had' is followed by _____",
+      "options": [
+        "inversion",
+        "normal order",
+        "question"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Nominal relative: What she did was _____ important.",
+      "options": [
+        "not",
+        "no",
+        "none"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: He insisted on her _____ the job.",
+      "options": [
+        "doing",
+        "do",
+        "to do"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Advanced verb: He tends _____ late.",
+      "options": [
+        "to arrive",
+        "arrive",
+        "arriving"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct formal: We request that he _____ present.",
+      "options": [
+        "be",
+        "is",
+        "was"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Discourse marker: 'Nevertheless' is used to show _____",
+      "options": [
+        "contrast",
+        "addition",
+        "cause"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose: The committee recommended that the proposal _____ accepted.",
+      "options": [
+        "be",
+        "is",
+        "was"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Adverb inversion: Seldom _____ she seen such behaviour.",
+      "options": [
+        "have",
+        "has",
+        "had"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose the correct idiom: He is on the _____ of collapse.",
+      "options": [
+        "verge",
+        "edge",
+        "brink"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: She would have passed if she _____ more.",
+      "options": [
+        "had studied",
+        "studied",
+        "would study"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Tag question: You wouldn't mind, _____ you?",
+      "options": [
+        "would",
+        "wouldn't",
+        "do"
+      ],
+      "correct": 1,
+      "explanation": "Правильный ответ: B. Второй вариант правильный"
+    },
+    {
+      "question": "Participle clause: _____ known, the results were surprising. (Had)",
+      "options": [
+        "Had they been",
+        "They had been",
+        "Being had been"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Subordinate clause: Hard as he _____, he failed.",
+      "options": [
+        "tried",
+        "try",
+        "tries"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    },
+    {
+      "question": "Choose correct: He speaks English as if he _____ a native.",
+      "options": [
+        "were",
+        "is",
+        "was"
+      ],
+      "correct": 0,
+      "explanation": "Правильный ответ: A. Первый вариант правильный"
+    }
+  ]
+}
