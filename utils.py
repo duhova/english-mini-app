@@ -65,6 +65,8 @@ async def mark_material_studied(user_id: int, material_id: int):
 # ======================================================
 async def add_coins(user_id: int, amount: int):
     async with aiosqlite.connect(DB_TESTS) as db:
+        # Гарантируем, что запись существует
+        await db.execute("INSERT OR IGNORE INTO users (user_id, coins, lives) VALUES (?, 50, 3)", (user_id,))
         await db.execute("UPDATE users SET coins = coins + ? WHERE user_id = ?", (amount, user_id))
         await db.commit()
 
