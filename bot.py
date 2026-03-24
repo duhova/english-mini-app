@@ -491,7 +491,6 @@ async def select_word_level(message: types.Message, state: FSMContext):
         logger.error(f"Ошибка в select_word_level: {e}")
         await message.answer("Произошла ошибка при выборе уровня.")
 
-
 async def show_word(message: types.Message, state: FSMContext):
     try:
         user_data = await state.get_data()
@@ -830,11 +829,58 @@ async def grammar_tests_menu(message: types.Message, state: FSMContext):
         reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
     )
 
+async def grammar_load_next_question(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    level = data.get("grammar_level")
+    if not level:
+        await message.answer("Ошибка: уровень не выбран.")
+        await back_to_main(message, state)
+        return
+
+    async with aiosqlite.connect(TESTS_DB) as db:
+        cur = await db.execute(
+            "SELECT id, question, option_a, option_b, option_c, correct, explanation FROM tests WHERE level=? ORDER BY RANDOM() LIMIT 1",
+            (level,)
+        )
+        row = await cur.fetchone()
+
+    if not row:
+        await message.answer("Нет тестов для этого уровня.")
+        await back_to_main(message, state)
+        return
+
+    test_id, q, oa, ob, oc, correct, explanation = row
+    await state.update_data(
+        current_test=row,
+        correct_answer=correct,
+        current_explanation=explanation,
+        waiting_for_next=False          # флаг, что ещё не отвечено
+    )
+    await state.set_state(UserState.grammar_waiting_answer)
+
+    options = [("1. " + oa), ("2. " + ob), ("3. " + oc)]
+    kb = [[types.KeyboardButton(text=opt)] for opt in options]
+    kb.append([types.KeyboardButton(text="Назад")])
+    await message.answer(f"📝 {q}", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
+
 @dp.message(UserState.grammar_select_level, F.text.in_(LEVELS))
 async def grammar_start(message: types.Message, state: FSMContext):
     try:
         level = message.text
         await state.update_data(grammar_level=level)
+        await grammar_load_next_question(message, state)
+    except Exception as e:
+        logger.error(f"Ошибка в grammar_start: {e}")
+        await message.answer("Произошла ошибка.")
+
+async def grammar_load_next_question(message: types.Message, state: FSMContext):
+    try:
+        data = await state.get_data()
+        level = data.get("grammar_level")
+        if not level:
+            await message.answer("Ошибка: уровень не выбран.")
+            await back_to_main(message, state)
+            return
 
         async with aiosqlite.connect(TESTS_DB) as db:
             cur = await db.execute(
@@ -845,6 +891,7 @@ async def grammar_start(message: types.Message, state: FSMContext):
 
         if not row:
             await message.answer("Нет тестов для этого уровня.")
+            await back_to_main(message, state)
             return
 
         test_id, q, oa, ob, oc, correct, explanation = row
@@ -852,7 +899,7 @@ async def grammar_start(message: types.Message, state: FSMContext):
             current_test=row,
             correct_answer=correct,
             current_explanation=explanation,
-            waiting_for_next=False   # флаг, что ещё не отвечено
+            waiting_for_next=False
         )
         await state.set_state(UserState.grammar_waiting_answer)
 
@@ -861,8 +908,8 @@ async def grammar_start(message: types.Message, state: FSMContext):
         kb.append([types.KeyboardButton(text="Назад")])
         await message.answer(f"📝 {q}", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
     except Exception as e:
-        logger.error(f"Ошибка в grammar_start: {e}")
-        await message.answer("Произошла ошибка.")
+        logger.error(f"Ошибка в grammar_load_next_question: {e}")
+        await message.answer("Произошла ошибка при загрузке вопроса.")
 
 
 @dp.message(UserState.grammar_waiting_answer)
@@ -874,9 +921,9 @@ async def grammar_check(message: types.Message, state: FSMContext):
         waiting_for_next = data.get("waiting_for_next", False)
         user_id = message.from_user.id
 
-        # Если уже отвечено на этот вопрос и нажата кнопка "Далее" – переходим к следующему
+        # Если пользователь уже ответил и нажал "Далее" – загружаем следующий вопрос
         if waiting_for_next:
-            await grammar_start(message, state)
+            await grammar_load_next_question(message, state)
             return
 
         user_choice = message.text.split('.')[0] if '.' in message.text else ''
@@ -891,7 +938,6 @@ async def grammar_check(message: types.Message, state: FSMContext):
                     msg += f"\n\n📖 Объяснение: {explanation}"
                 await message.answer(msg)
             else:
-                # Жизни закончились
                 msg = f"❌ Неправильно! Правильный ответ: {correct}\n💀 У вас закончились жизни!"
                 if explanation:
                     msg += f"\n\n📖 Объяснение: {explanation}"
@@ -904,19 +950,20 @@ async def grammar_check(message: types.Message, state: FSMContext):
                 await state.clear()
                 return
 
-        # Сохраняем, что ответ дан, и показываем кнопку "Далее"
+        # После ответа показываем кнопку "Далее"
         await state.update_data(waiting_for_next=True)
         kb = [[types.KeyboardButton(text="Далее →")], [types.KeyboardButton(text="Назад")]]
         await message.answer("Нажмите «Далее», чтобы продолжить.", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
     except Exception as e:
         logger.error(f"Ошибка в grammar_check: {e}")
         await message.answer("Произошла ошибка.")
-        
+
 @dp.message(UserState.grammar_waiting_answer, F.text == "Далее →")
 async def grammar_next(message: types.Message, state: FSMContext):
     data = await state.get_data()
     if data.get("waiting_for_next"):
-        await grammar_start(message, state)
+        # Передаём управление в grammar_check, который загрузит следующий вопрос
+        await grammar_check(message, state)
     else:
         await message.answer("Сначала ответьте на вопрос.")
 
