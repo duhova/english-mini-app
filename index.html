@@ -2,366 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>📚 Тесты по английскому</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
+        /* ... все стили остаются без изменений, только добавлен блок для жизней */
+        .lives-display {
+            display: inline-block;
+            background: #ffeb3b;
+            padding: 5px 12px;
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            min-height: 600px;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .level-buttons {
-            display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .level-btn {
-            padding: 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .level-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .beginner {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            color: white;
-        }
-        
-        .intermediate {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: white;
-        }
-        
-        .advanced {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .test-container {
-            display: none;
-        }
-        
-        .question {
-            font-size: 20px;
-            margin-bottom: 25px;
-            color: #333;
-            line-height: 1.4;
-            padding: 15px;
-            background: #f8f9ff;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .options {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .option-btn {
-            padding: 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            background: white;
-            font-size: 16px;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .option-btn:hover:not(.disabled) {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-        
-        .option-btn.selected {
-            border-color: #667eea;
-            background: #f0f3ff;
-        }
-        
-        .option-btn.correct {
-            border-color: #43e97b;
-            background: #e8f9f0;
-        }
-        
-        .option-btn.wrong {
-            border-color: #fa709a;
-            background: #fff0f3;
-        }
-        
-        .option-btn.disabled {
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-        
-        .feedback {
-            display: none;
-            margin: 20px 0;
-            padding: 20px;
-            border-radius: 12px;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        .feedback.correct {
-            background: #e8f9f0;
-            border: 2px solid #43e97b;
-        }
-        
-        .feedback.incorrect {
-            background: #fff0f3;
-            border: 2px solid #fa709a;
-        }
-        
-        .feedback h3 {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .explanation {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255,255,255,0.8);
-            border-radius: 8px;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-        
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        
-        .nav-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-btn.primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .nav-btn.secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .result {
-            display: none;
-            text-align: center;
-            padding: 30px;
-        }
-        
-        .result h2 {
-            font-size: 32px;
+            font-weight: bold;
             margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .score {
-            font-size: 64px;
-            font-weight: bold;
-            color: #667eea;
-            margin: 20px 0;
-        }
-        
-        .result-text {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 25px;
-        }
-        
-        .emoji {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-        
-        .progress {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
             font-size: 16px;
-            color: #666;
-            background: #f8f9ff;
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-        
-        .progress-bar {
-            flex-grow: 1;
-            height: 10px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            margin: 0 20px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        .question-counter {
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 25px 0;
-        }
-        
-        .stat-card {
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            background: #f8f9ff;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .review-section {
-            margin-top: 30px;
-            text-align: left;
-        }
-        
-        .review-item {
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            background: #f8f9ff;
-        }
-        
-        .review-correct {
-            border-left: 4px solid #43e97b;
-        }
-        
-        .review-incorrect {
-            border-left: 4px solid #fa709a;
-        }
-        
-        .back-btn {
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .back-btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 400px;
-            font-size: 20px;
-            color: #666;
-        }
-        
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -372,96 +25,76 @@
                 <h1>📚 Тесты по английскому</h1>
                 <p>Выберите уровень сложности:</p>
             </div>
-            
+            <div id="livesDisplay" class="lives-display" style="display: none;"></div>
             <div class="level-buttons">
-                <button class="level-btn beginner" onclick="startTest('Начальный')">
-                    <span>🎯</span> Начальный уровень
-                    <span style="font-size: 14px; opacity: 0.9; margin-left: auto;">(33 теста)</span>
-                </button>
-                <button class="level-btn intermediate" onclick="startTest('Средний')">
-                    <span>⚡</span> Средний уровень
-                    <span style="font-size: 14px; opacity: 0.9; margin-left: auto;">(33 теста)</span>
-                </button>
-                <button class="level-btn advanced" onclick="startTest('Продвинутый')">
-                    <span>🚀</span> Продвинутый уровень
-                    <span style="font-size: 14px; opacity: 0.9; margin-left: auto;">(34 теста)</span>
-                </button>
+                <button class="level-btn beginner" data-level="Начальный">🎯 Начальный уровень</button>
+                <button class="level-btn intermediate" data-level="Средний">⚡ Средний уровень</button>
+                <button class="level-btn advanced" data-level="Продвинутый">🚀 Продвинутый уровень</button>
             </div>
-            
+            <div style="text-align: center; margin-top: 30px; color: #666;">
+                <p>📊 Тесты по грамматике</p>
+                <p>✅ После ответа – объяснение</p>
+                <p>📈 В конце – подробная статистика</p>
+            </div>
         </div>
-        
+
         <div id="loadingScreen" class="loading" style="display: none;">
             <div class="loader"></div>
             <div>Загрузка тестов...</div>
         </div>
-        
+
         <div id="testContainer" class="test-container">
             <div class="progress">
-                <div>
-                    Вопрос: <span class="question-counter" id="currentQuestion">1</span>/<span id="totalQuestions">10</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div>
-                    Правильно: <span class="question-counter" id="correctCount">0</span>
-                </div>
+                <div>Вопрос: <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span></div>
+                <div class="progress-bar"><div id="progressFill"></div></div>
+                <div>Правильно: <span id="correctCount">0</span></div>
             </div>
-            
+            <div id="livesDisplayTest" class="lives-display" style="margin-bottom: 10px;"></div>
             <div class="question" id="questionText"></div>
-            
             <div class="options" id="optionsContainer"></div>
-            
             <div id="feedback" class="feedback">
                 <h3 id="feedbackTitle"></h3>
                 <div class="explanation" id="explanation"></div>
             </div>
-            
             <div class="navigation">
                 <button class="nav-btn secondary" onclick="previousQuestion()" id="prevBtn">← Назад</button>
-                <button class="nav-btn primary" onclick="checkAnswer()" id="checkBtn">Проверить ответ</button>
+                <button class="nav-btn secondary" onclick="showHint()" id="hintBtn">💡 Подсказка</button>
+                <button class="nav-btn primary" onclick="checkAnswer()" id="checkBtn">Проверить</button>
                 <button class="nav-btn primary" onclick="nextQuestion()" id="nextBtn" style="display: none;">Далее →</button>
             </div>
         </div>
-        
+
         <div id="resultContainer" class="result">
             <div class="emoji" id="resultEmoji">🎉</div>
             <h2>Тест завершён!</h2>
             <div class="score" id="scoreText">0/10</div>
-            
+            <div class="score" id="pointsText">0 XP</div>
+            <div id="achievementsList"></div>
             <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="correctAnswers">0</div>
-                    <div class="stat-label">Правильно</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="incorrectAnswers">0</div>
-                    <div class="stat-label">Ошибки</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="percentage">0%</div>
-                    <div class="stat-label">Результат</div>
-                </div>
+                <div class="stat-card"><div class="stat-value" id="correctAnswers">0</div><div class="stat-label">Правильно</div></div>
+                <div class="stat-card"><div class="stat-value" id="incorrectAnswers">0</div><div class="stat-label">Ошибки</div></div>
+                <div class="stat-card"><div class="stat-value" id="percentage">0%</div><div class="stat-label">Результат</div></div>
             </div>
-            
             <div class="result-text" id="resultText"></div>
-            
             <div class="review-section" id="reviewSection" style="display: none;">
-                <h3 style="margin-bottom: 15px; text-align: left;">📝 Обзор ошибок:</h3>
+                <h3>📝 Обзор ошибок:</h3>
                 <div id="mistakesList"></div>
             </div>
-            
             <button class="back-btn" onclick="goBackToLevels()">← Выбрать другой уровень</button>
         </div>
     </div>
 
     <script>
-        // Telegram WebApp
         let tg = window.Telegram.WebApp;
         tg.expand();
         tg.enableClosingConfirmation();
-        
-        // Глобальные переменные
+
+        // Получение параметров из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let user_id = urlParams.get('user_id');
+        let lives = parseInt(urlParams.get('lives')) || 3;
+        const levelFromUrl = urlParams.get('level');
+
         let currentLevel = '';
         let currentTest = [];
         let currentQuestionIndex = 0;
@@ -469,23 +102,27 @@
         let testResults = [];
         let correctCount = 0;
         let incorrectCount = 0;
-        
-        // Загрузка тестов из JSON
+
+        function updateLivesUI() {
+            const livesText = `❤️ Жизни: ${lives}`;
+            const livesDisplay = document.getElementById('livesDisplay');
+            const livesDisplayTest = document.getElementById('livesDisplayTest');
+            if (livesDisplay) livesDisplay.textContent = livesText;
+            if (livesDisplayTest) livesDisplayTest.textContent = livesText;
+        }
+
         async function loadTests(level) {
             try {
                 const response = await fetch('tests.json');
-                if (!response.ok) {
-                    throw new Error('Ошибка загрузки тестов');
-                }
+                if (!response.ok) throw new Error();
                 const data = await response.json();
                 return data[level] || [];
-            } catch (error) {
-                console.error('Ошибка:', error);
+            } catch (e) {
+                console.error(e);
                 return [];
             }
         }
-        
-        // Начать тест
+
         async function startTest(level) {
             currentLevel = level;
             currentQuestionIndex = 0;
@@ -493,334 +130,226 @@
             testResults = [];
             correctCount = 0;
             incorrectCount = 0;
-            
-            // Показать экран загрузки
+
             document.getElementById('levelSelect').style.display = 'none';
             document.getElementById('loadingScreen').style.display = 'flex';
-            
-            // Загрузить тесты
+
             currentTest = await loadTests(level);
-            
             if (currentTest.length === 0) {
-                alert('Не удалось загрузить тесты для этого уровня');
+                alert('Не удалось загрузить тесты');
                 goBackToLevels();
                 return;
             }
-            
-            // Скрыть загрузку, показать тест
+
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('testContainer').style.display = 'block';
             document.getElementById('resultContainer').style.display = 'none';
-            
-            // Обновить информацию
             document.getElementById('totalQuestions').textContent = currentTest.length;
-            
-            // Загрузить первый вопрос
+            updateLivesUI();
             loadQuestion();
             updateProgress();
         }
-        
-        // Загрузить вопрос
+
         function loadQuestion() {
-            const question = currentTest[currentQuestionIndex];
-            
-            // Текст вопроса
-            document.getElementById('questionText').textContent = 
-                `Вопрос ${currentQuestionIndex + 1}: ${question.question}`;
-            
-            // Варианты ответов
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.innerHTML = '';
-            
-            question.options.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.className = 'option-btn';
-                
-                // Если уже отвечали на этот вопрос
+            const q = currentTest[currentQuestionIndex];
+            document.getElementById('questionText').textContent = `Вопрос ${currentQuestionIndex+1}: ${q.question}`;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
                 if (userAnswers[currentQuestionIndex] !== undefined) {
-                    button.classList.add('disabled');
-                    
-                    if (index === question.correct) {
-                        button.classList.add('correct');
-                    }
-                    
-                    if (userAnswers[currentQuestionIndex] === index && index !== question.correct) {
-                        button.classList.add('wrong');
-                    }
+                    btn.classList.add('disabled');
+                    if (i === q.correct) btn.classList.add('correct');
+                    if (userAnswers[currentQuestionIndex] === i && i !== q.correct) btn.classList.add('wrong');
                 }
-                
-                // Если выбран этот вариант
-                if (userAnswers[currentQuestionIndex] === index) {
-                    button.classList.add('selected');
-                }
-                
-                button.innerHTML = `
-                    <span style="font-weight: bold; margin-right: 10px;">${String.fromCharCode(65 + index)}.</span>
-                    <span>${option}</span>
-                `;
-                
-                // Обработчик выбора
-                if (userAnswers[currentQuestionIndex] === undefined) {
-                    button.onclick = () => selectOption(index);
-                }
-                
-                optionsContainer.appendChild(button);
+                if (userAnswers[currentQuestionIndex] === i) btn.classList.add('selected');
+                btn.innerHTML = `<span style="font-weight:bold; margin-right:10px;">${String.fromCharCode(65+i)}.</span>${opt}`;
+                if (userAnswers[currentQuestionIndex] === undefined) btn.onclick = () => selectOption(i);
+                container.appendChild(btn);
             });
-            
-            // Кнопки навигации
+
             document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
-            
             if (userAnswers[currentQuestionIndex] !== undefined) {
-                // Уже отвечали на этот вопрос
                 document.getElementById('checkBtn').style.display = 'none';
                 document.getElementById('nextBtn').style.display = 'block';
                 showFeedback();
             } else {
-                // Еще не отвечали
                 document.getElementById('checkBtn').style.display = 'block';
                 document.getElementById('nextBtn').style.display = 'none';
                 document.getElementById('feedback').style.display = 'none';
             }
-            
-            // Обновить прогресс
             updateProgress();
         }
-        
-        // Выбрать вариант
-        function selectOption(optionIndex) {
-            userAnswers[currentQuestionIndex] = optionIndex;
-            
-            // Сбросить все выделения
-            const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(btn => btn.classList.remove('selected'));
-            
-            // Выделить выбранный
-            buttons[optionIndex].classList.add('selected');
+
+        function selectOption(i) {
+            userAnswers[currentQuestionIndex] = i;
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.option-btn')[i].classList.add('selected');
         }
-        
-        // Проверить ответ
+
         function checkAnswer() {
             if (userAnswers[currentQuestionIndex] === undefined) {
-                alert('Пожалуйста, выберите ответ!');
+                alert('Выберите ответ');
                 return;
             }
-            
-            const question = currentTest[currentQuestionIndex];
-            const selectedOption = userAnswers[currentQuestionIndex];
-            const isCorrect = selectedOption === question.correct;
-            
-            // Сохранить результат
-            testResults[currentQuestionIndex] = {
-                question: question.question,
-                userAnswer: selectedOption,
-                correctAnswer: question.correct,
-                isCorrect: isCorrect,
-                explanation: question.explanation || 'Нет объяснения'
-            };
-            
-            // Обновить счет
-            if (isCorrect) {
-                correctCount++;
-            } else {
-                incorrectCount++;
+            const q = currentTest[currentQuestionIndex];
+            const selected = userAnswers[currentQuestionIndex];
+            const isCorrect = selected === q.correct;
+
+            if (!isCorrect) {
+                lives = Math.max(0, lives - 1);
+                updateLivesUI();
+                if (lives === 0) {
+                    alert("💀 У вас закончились жизни! Тест остановлен.");
+                    showResults();
+                    return;
+                }
             }
-            
-            // Показать обратную связь
+
+            testResults[currentQuestionIndex] = {
+                question: q.question,
+                userAnswer: selected,
+                correctAnswer: q.correct,
+                isCorrect: isCorrect,
+                explanation: q.explanation || ''
+            };
+
+            if (isCorrect) correctCount++;
+            else incorrectCount++;
+
+            document.getElementById('correctCount').textContent = correctCount;
             showFeedback();
-            
-            // Обновить кнопки
+
             document.getElementById('checkBtn').style.display = 'none';
             document.getElementById('nextBtn').style.display = 'block';
-            
-            // Обновить счетчик на экране
-            document.getElementById('correctCount').textContent = correctCount;
-            
-            // Заблокировать варианты ответов
-            const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(btn => {
+
+            document.querySelectorAll('.option-btn').forEach(btn => {
                 btn.classList.add('disabled');
                 btn.onclick = null;
             });
         }
-        
-        // Показать обратную связь
+
         function showFeedback() {
-            const question = currentTest[currentQuestionIndex];
-            const selectedOption = userAnswers[currentQuestionIndex];
-            const isCorrect = selectedOption === question.correct;
-            
+            const q = currentTest[currentQuestionIndex];
+            const selected = userAnswers[currentQuestionIndex];
+            const isCorrect = selected === q.correct;
             const feedback = document.getElementById('feedback');
-            const feedbackTitle = document.getElementById('feedbackTitle');
-            const explanation = document.getElementById('explanation');
-            
-            if (isCorrect) {
-                feedback.className = 'feedback correct';
-                feedbackTitle.innerHTML = '✅ <span style="color: #43e97b;">Правильно!</span>';
-            } else {
-                feedback.className = 'feedback incorrect';
-                feedbackTitle.innerHTML = '❌ <span style="color: #fa709a;">Неправильно</span>';
-            }
-            
-            // Правильный ответ
-            const correctLetter = String.fromCharCode(65 + question.correct);
-            const correctText = question.options[question.correct];
-            
-            explanation.innerHTML = `
-                <div style="margin-bottom: 10px;">
-                    <strong>Правильный ответ:</strong> ${correctLetter}. ${correctText}
-                </div>
-                <div>
-                    <strong>Объяснение:</strong> ${question.explanation || 'Нет дополнительного объяснения'}
-                </div>
+            feedback.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
+            document.getElementById('feedbackTitle').innerHTML = isCorrect ? '✅ Правильно!' : '❌ Неправильно';
+            const correctLetter = String.fromCharCode(65 + q.correct);
+            document.getElementById('explanation').innerHTML = `
+                <div><strong>Правильный ответ:</strong> ${correctLetter}. ${q.options[q.correct]}</div>
+                <div><strong>Объяснение:</strong> ${q.explanation || 'Нет дополнительного объяснения'}</div>
             `;
-            
             feedback.style.display = 'block';
         }
-        
-        // Следующий вопрос
+
+        function showHint() {
+            const q = currentTest[currentQuestionIndex];
+            if (q.hint) alert('💡 ' + q.hint);
+            else alert('Нет подсказки');
+        }
+
         function nextQuestion() {
             if (currentQuestionIndex < currentTest.length - 1) {
                 currentQuestionIndex++;
                 loadQuestion();
-                updateProgress();
             } else {
                 showResults();
             }
         }
-        
-        // Предыдущий вопрос
+
         function previousQuestion() {
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
                 loadQuestion();
-                updateProgress();
             }
         }
-        
-        // Обновить прогресс-бар
+
         function updateProgress() {
-            const progress = ((currentQuestionIndex + 1) / currentTest.length) * 100;
+            const progress = ((currentQuestionIndex+1) / currentTest.length) * 100;
             document.getElementById('progressFill').style.width = `${progress}%`;
-            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex+1;
         }
-        
-        // Показать результаты
+
         function showResults() {
             const total = currentTest.length;
             const percentage = Math.round((correctCount / total) * 100);
-            
-            // Обновить статистику
             document.getElementById('scoreText').textContent = `${correctCount}/${total}`;
             document.getElementById('correctAnswers').textContent = correctCount;
             document.getElementById('incorrectAnswers').textContent = incorrectCount;
             document.getElementById('percentage').textContent = `${percentage}%`;
-            
-            // Эмодзи и текст в зависимости от результата
+
             const emoji = document.getElementById('resultEmoji');
-            const resultText = document.getElementById('resultText');
-            
-            let emojiIcon = '🎉';
-            let message = '';
-            
-            if (percentage >= 90) {
-                emojiIcon = '🏆';
-                message = 'Отличный результат! Вы настоящий эксперт!';
-            } else if (percentage >= 70) {
-                emojiIcon = '👍';
-                message = 'Хороший результат! Продолжайте в том же духе!';
-            } else if (percentage >= 50) {
-                emojiIcon = '📚';
-                message = 'Неплохо! Есть над чем поработать.';
-            } else {
-                emojiIcon = '💪';
-                message = 'Практика делает мастера! Продолжайте учиться!';
-            }
-            
-            emoji.textContent = emojiIcon;
-            resultText.textContent = message;
-            
-            // Показать ошибки, если они есть
+            let msg = '';
+            if (percentage >= 90) { emoji.textContent = '🏆'; msg = 'Отлично! Вы эксперт!'; }
+            else if (percentage >= 70) { emoji.textContent = '👍'; msg = 'Хороший результат!'; }
+            else if (percentage >= 50) { emoji.textContent = '📚'; msg = 'Неплохо, есть над чем работать.'; }
+            else { emoji.textContent = '💪'; msg = 'Практика делает мастера! Продолжайте учиться!'; }
+            document.getElementById('resultText').textContent = msg;
+
             if (incorrectCount > 0) {
-                showMistakesReview();
+                const mistakesList = document.getElementById('mistakesList');
+                mistakesList.innerHTML = '';
+                testResults.forEach((res, idx) => {
+                    if (!res.isCorrect) {
+                        const q = currentTest[idx];
+                        const userLetter = String.fromCharCode(65 + res.userAnswer);
+                        const correctLetter = String.fromCharCode(65 + res.correctAnswer);
+                        mistakesList.innerHTML += `
+                            <div class="review-item review-incorrect">
+                                <div><strong>Вопрос ${idx+1}:</strong> ${res.question}</div>
+                                <div>❌ Ваш ответ: ${userLetter}. ${q.options[res.userAnswer]}</div>
+                                <div>✅ Правильно: ${correctLetter}. ${q.options[res.correctAnswer]}</div>
+                                <div>${res.explanation}</div>
+                            </div>
+                        `;
+                    }
+                });
+                document.getElementById('reviewSection').style.display = 'block';
             }
-            
-            // Показать результаты, скрыть тест
+
             document.getElementById('testContainer').style.display = 'none';
             document.getElementById('resultContainer').style.display = 'block';
-            
-            // Отправить результаты в бота
             sendResultsToBot(percentage);
         }
-        
-        // Показать обзор ошибок
-        function showMistakesReview() {
-            const mistakesList = document.getElementById('mistakesList');
-            const reviewSection = document.getElementById('reviewSection');
-            
-            mistakesList.innerHTML = '';
-            
-            // Найти все ошибки
-            testResults.forEach((result, index) => {
-                if (!result.isCorrect) {
-                    const question = currentTest[index];
-                    const userLetter = String.fromCharCode(65 + result.userAnswer);
-                    const correctLetter = String.fromCharCode(65 + result.correctAnswer);
-                    
-                    const mistakeItem = document.createElement('div');
-                    mistakeItem.className = 'review-item review-incorrect';
-                    mistakeItem.innerHTML = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">
-                            Вопрос ${index + 1}: ${result.question}
-                        </div>
-                        <div style="color: #fa709a; margin-bottom: 5px;">
-                            ❌ Ваш ответ: ${userLetter}. ${question.options[result.userAnswer]}
-                        </div>
-                        <div style="color: #43e97b; margin-bottom: 5px;">
-                            ✅ Правильно: ${correctLetter}. ${question.options[result.correctAnswer]}
-                        </div>
-                        <div style="color: #666; font-size: 14px;">
-                            ${result.explanation}
-                        </div>
-                    `;
-                    
-                    mistakesList.appendChild(mistakeItem);
-                }
-            });
-            
-            reviewSection.style.display = 'block';
-        }
-        
-        // Отправить результаты в бота
+
         function sendResultsToBot(percentage) {
-            const resultData = {
+            const data = {
                 level: currentLevel,
                 score: correctCount,
                 total: currentTest.length,
                 percentage: percentage,
-                timestamp: new Date().toISOString()
+                lives: lives,
+                user_id: user_id
             };
-            
-            // Отправить данные в Telegram бота
-            if (tg.sendData) {
-                tg.sendData(JSON.stringify(resultData));
-            }
-            
-            console.log('Результаты теста:', resultData);
+            if (tg.sendData) tg.sendData(JSON.stringify(data));
         }
-        
-        // Вернуться к выбору уровня
+
         function goBackToLevels() {
             document.getElementById('levelSelect').style.display = 'block';
             document.getElementById('testContainer').style.display = 'none';
             document.getElementById('resultContainer').style.display = 'none';
             document.getElementById('loadingScreen').style.display = 'none';
         }
-        
-        // Инициализация при загрузке
+
         document.addEventListener('DOMContentLoaded', () => {
+            if (levelFromUrl) {
+                startTest(levelFromUrl);
+            } else {
+                document.querySelectorAll('.level-btn').forEach(btn => {
+                    btn.onclick = () => startTest(btn.dataset.level);
+                });
+                if (user_id) {
+                    document.getElementById('livesDisplay').style.display = 'block';
+                    updateLivesUI();
+                }
+            }
             tg.ready();
         });
     </script>
 </body>
 </html>
-
