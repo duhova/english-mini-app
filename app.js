@@ -203,11 +203,29 @@ function checkAnswer() {
 
 function showHint() {
     const q = currentTest[currentQuestionIndex];
-    if (!q.hint) {
+    const hintText = q.hint;
+    
+    if (hintText) {
+        const hintBlock = document.getElementById('hintBlock');
+        if (!hintBlock) {
+            // Создаём блок, если его нет
+            const newDiv = document.createElement('div');
+            newDiv.id = 'hintBlock';
+            newDiv.className = 'hint';
+            newDiv.innerHTML = `<strong>💡 Подсказка:</strong> ${hintText}`;
+            document.querySelector('.question').after(newDiv);
+        } else {
+            hintBlock.innerHTML = `<strong>💡 Подсказка:</strong> ${hintText}`;
+            hintBlock.style.display = 'block';
+        }
+        // Скрываем через 3 секунды
+        setTimeout(() => {
+            const hint = document.getElementById('hintBlock');
+            if (hint) hint.style.display = 'none';
+        }, 5000);
+    } else {
         alert('Нет подсказки');
-        return;
     }
-    alert('💡 ' + q.hint);
 }
 
 function showFeedback() {
