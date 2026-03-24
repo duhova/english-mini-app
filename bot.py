@@ -365,6 +365,16 @@ async def get_tests_for_mini_app(level=None):
 # ======================================================
 @dp.message(Command("start"))
 async def start(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    username = message.from_user.username or ""
+
+    # Гарантируем, что пользователь есть в таблице users с 50 монетами и 3 жизнями
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("""
+            INSERT OR IGNORE INTO users (user_id, username, coins, lives)
+            VALUES (?, ?, 50, 3)
+        """, (user_id, username))
+        await db.commit()
     try:
         await state.clear()
 
@@ -372,8 +382,10 @@ async def start(message: types.Message, state: FSMContext):
             [types.KeyboardButton(text="Изучать слова")],
             [types.KeyboardButton(text="Грамматические тесты (в боте)")],
             [types.KeyboardButton(text="📱 Тесты в мини-приложении")],
-            [types.KeyboardButton(text="📘 Методичка")]
+            [types.KeyboardButton(text="📘 Методичка")],
+            [types.KeyboardButton(text="💰 Баланс")]          # новая кнопка
         ]
+
         keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
         await message.answer(
@@ -390,7 +402,6 @@ async def start(message: types.Message, state: FSMContext):
         logger.error(f"Ошибка в start: {e}")
         await message.answer("Произошла ошибка. Попробуйте позже.")
 
-
 # ======================================================
 # UNIVERSAL BACK BUTTON (works ALWAYS)
 # ======================================================
@@ -403,7 +414,8 @@ async def back_to_main(message: types.Message, state: FSMContext):
             [types.KeyboardButton(text="Изучать слова")],
             [types.KeyboardButton(text="Грамматические тесты (в боте)")],
             [types.KeyboardButton(text="📱 Тесты в мини-приложении")],
-            [types.KeyboardButton(text="📘 Методичка")]   # новая кнопка
+            [types.KeyboardButton(text="📘 Методичка")],
+            [types.KeyboardButton(text="💰 Баланс")]          # новая кнопка
         ]
         keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
         await message.answer("Главное меню:", reply_markup=keyboard)
@@ -527,6 +539,14 @@ async def show_word(message: types.Message, state: FSMContext):
         logger.error(f"Ошибка в show_word: {e}")
         await message.answer("Произошла ошибка.")
 
+@dp.message(F.text == "💰 Баланс")
+async def show_balance(message: types.Message):
+    user_id = message.from_user.id
+    async with aiosqlite.connect(TESTS_DB) as db:
+        cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        coins = row[0] if row else 0
+    await message.answer(f"💰 Ваш баланс: **{coins}** монет.", parse_mode="HTML")
 
 @dp.message(F.text == "Следующее слово")
 async def next_word(message: types.Message, state: FSMContext):
@@ -626,15 +646,21 @@ async def check_test_answer(message: types.Message, state: FSMContext):
 @dp.message(F.text == "📘 Методичка")
 async def study_material(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    username = message.from_user.username or ""
 
-    # Получаем случайную неизученную методичку
+    # Гарантируем запись в users
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("INSERT OR IGNORE INTO users (user_id, username, coins, lives) VALUES (?, ?, 50, 3)", (user_id, username))
+        await db.commit()
+
     material = await get_unstudied_material(user_id)
     if not material:
         await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
+        await back_to_main(message, state)   # возвращаем в главное меню
         return
 
     material_id, filename = material
-    file_path = os.path.join("study_materials", filename)
+    file_path = os.path.join(MATERIALS_DIR, filename)
     try:
         photo = FSInputFile(file_path)
         await message.answer_photo(photo, caption="📘 **Изучите методичку**\n\nПосле просмотра вы получите +5 монет.")
@@ -643,16 +669,19 @@ async def study_material(message: types.Message, state: FSMContext):
         await message.answer("Не удалось загрузить методичку.")
         return
 
-    # Отмечаем изученной и начисляем монеты
     await mark_material_studied(user_id, material_id)
     await add_coins(user_id, 5)
 
-    # Показываем текущий баланс
+    # Получаем новый баланс
     async with aiosqlite.connect(TESTS_DB) as db:
         cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
         row = await cursor.fetchone()
         coins = row[0] if row else 0
-    await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.") 
+
+    await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.")
+
+    # Возвращаем главное меню, чтобы пользователь мог продолжить
+    await back_to_main(message, state)
 
 # ======================================================
 # MINI-APP TESTS (WebApp)
@@ -801,7 +830,6 @@ async def grammar_tests_menu(message: types.Message, state: FSMContext):
         reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
     )
 
-
 @dp.message(UserState.grammar_select_level, F.text.in_(LEVELS))
 async def grammar_start(message: types.Message, state: FSMContext):
     try:
@@ -819,23 +847,19 @@ async def grammar_start(message: types.Message, state: FSMContext):
             await message.answer("Нет тестов для этого уровня.")
             return
 
-        test_id, q, o1, o2, o3, correct, explanation = row
-
+        test_id, q, oa, ob, oc, correct, explanation = row
         await state.update_data(
             current_test=row,
             correct_answer=correct,
-            current_explanation=explanation   # сохраняем
+            current_explanation=explanation,
+            waiting_for_next=False   # флаг, что ещё не отвечено
         )
         await state.set_state(UserState.grammar_waiting_answer)
 
-        options = [("1. " + o1), ("2. " + o2), ("3. " + o3)]
+        options = [("1. " + oa), ("2. " + ob), ("3. " + oc)]
         kb = [[types.KeyboardButton(text=opt)] for opt in options]
         kb.append([types.KeyboardButton(text="Назад")])
-
-        await message.answer(
-            f"📝 {q}",
-            reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-        )
+        await message.answer(f"📝 {q}", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
     except Exception as e:
         logger.error(f"Ошибка в grammar_start: {e}")
         await message.answer("Произошла ошибка.")
@@ -847,7 +871,13 @@ async def grammar_check(message: types.Message, state: FSMContext):
         data = await state.get_data()
         correct = data.get("correct_answer")
         explanation = data.get("current_explanation", "")
+        waiting_for_next = data.get("waiting_for_next", False)
         user_id = message.from_user.id
+
+        # Если уже отвечено на этот вопрос и нажата кнопка "Далее" – переходим к следующему
+        if waiting_for_next:
+            await grammar_start(message, state)
+            return
 
         user_choice = message.text.split('.')[0] if '.' in message.text else ''
         if user_choice == str(correct):
@@ -861,7 +891,7 @@ async def grammar_check(message: types.Message, state: FSMContext):
                     msg += f"\n\n📖 Объяснение: {explanation}"
                 await message.answer(msg)
             else:
-                # Жизни закончились – показываем инлайн-кнопки
+                # Жизни закончились
                 msg = f"❌ Неправильно! Правильный ответ: {correct}\n💀 У вас закончились жизни!"
                 if explanation:
                     msg += f"\n\n📖 Объяснение: {explanation}"
@@ -874,10 +904,21 @@ async def grammar_check(message: types.Message, state: FSMContext):
                 await state.clear()
                 return
 
-        await grammar_start(message, state)
+        # Сохраняем, что ответ дан, и показываем кнопку "Далее"
+        await state.update_data(waiting_for_next=True)
+        kb = [[types.KeyboardButton(text="Далее →")], [types.KeyboardButton(text="Назад")]]
+        await message.answer("Нажмите «Далее», чтобы продолжить.", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
     except Exception as e:
         logger.error(f"Ошибка в grammar_check: {e}")
         await message.answer("Произошла ошибка.")
+        
+@dp.message(UserState.grammar_waiting_answer, F.text == "Далее →")
+async def grammar_next(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    if data.get("waiting_for_next"):
+        await grammar_start(message, state)
+    else:
+        await message.answer("Сначала ответьте на вопрос.")
 
 @dp.callback_query(lambda c: c.data == "restore_grammar_lives")
 async def restore_grammar_lives(callback: CallbackQuery, state: FSMContext):
