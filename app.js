@@ -3,55 +3,46 @@ let tg = window.Telegram.WebApp;
 tg.expand();
 tg.enableClosingConfirmation();
 
-// ─────────────── ЖИЗНИ В MINI-APP ───────────────
-
-// Получение lives и user_id из query параметров, переданных ботом
+// Получение параметров из URL
 const urlParams = new URLSearchParams(window.location.search);
 let user_id = urlParams.get('user_id');
 let lives = parseInt(urlParams.get('lives')) || 3;
+let currentLevelFromUrl = urlParams.get('level') || null;
 
-// Создаем элемент для отображения жизней
-const livesDiv = document.createElement('div');
-livesDiv.id = 'lives';
-livesDiv.style.fontSize = '18px';
-livesDiv.style.marginBottom = '10px';
-document.getElementById('levelSelect').prepend(livesDiv);
+// Элементы для отображения жизней
+const livesDisplay = document.getElementById('livesDisplay');
+const livesDisplayTest = document.getElementById('livesDisplayTest');
 
-// Функция для обновления UI жизней
 function updateLivesUI() {
-    livesDiv.textContent = `❤️ Жизни: ${lives}`;
+    const livesText = `❤️ Жизни: ${lives}`;
+    if (livesDisplay) livesDisplay.textContent = livesText;
+    if (livesDisplayTest) livesDisplayTest.textContent = livesText;
 }
-
-// Вызываем при старте приложения
 updateLivesUI();
 
-// 🔙 Back Button
+// Глобальные переменные
+let currentLevel = '';
+let currentTest = [];
+let currentQuestionIndex = 0;
+let userAnswers = {};
+let correctCount = 0;
+let points = 0;
+let streak = 0;
+let achievements = [];
+let testResults = [];
+
+// Инициализация Telegram BackButton
 function showBackButton() {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
         goBackToLevels();
     });
 }
-
 function hideBackButton() {
     tg.BackButton.hide();
 }
 
-// 🌍 Глобальные переменные
-let currentLevel = '';
-let currentTest = [];
-let currentQuestionIndex = 0;
-let userAnswers = {};
-let testResults = [];
-let correctCount = 0;
-let incorrectCount = 0;
-
-// 🏆 XP система
-let points = parseInt(localStorage.getItem('totalPoints')) || 0;
-let achievements = [];
-let streak = 0;
-
-// 📦 Загрузка тестов
+// Загрузка тестов
 async function loadTests(level) {
     try {
         const response = await fetch('tests.json');
@@ -64,16 +55,15 @@ async function loadTests(level) {
     }
 }
 
-// 🚀 Старт теста
+// Старт теста
 async function startTest(level) {
     currentLevel = level;
     currentQuestionIndex = 0;
     userAnswers = {};
-    testResults = [];
     correctCount = 0;
-    incorrectCount = 0;
     streak = 0;
     achievements = [];
+    testResults = [];
 
     showBackButton();
 
@@ -92,12 +82,12 @@ async function startTest(level) {
     document.getElementById('testContainer').style.display = 'block';
 
     document.getElementById('totalQuestions').textContent = currentTest.length;
-    updateLivesUI(); // показываем lives сразу при старте
+    updateLivesUI();
     loadQuestion();
     updateProgress();
 }
 
-// ❓ Загрузка вопроса
+// Загрузка вопроса
 function loadQuestion() {
     const q = currentTest[currentQuestionIndex];
 
@@ -113,7 +103,6 @@ function loadQuestion() {
 
         if (userAnswers[currentQuestionIndex] !== undefined) {
             btn.classList.add('disabled');
-
             if (i === q.correct) btn.classList.add('correct');
             if (userAnswers[currentQuestionIndex] === i && i !== q.correct)
                 btn.classList.add('wrong');
@@ -143,14 +132,12 @@ function loadQuestion() {
         document.getElementById('feedback').style.display = 'none';
     }
 
-    // 💡 Hint блокировка
     document.getElementById('hintBtn').disabled =
         userAnswers[currentQuestionIndex] !== undefined;
 
     updateProgress();
 }
 
-// 🎯 Выбор ответа
 function selectOption(i) {
     userAnswers[currentQuestionIndex] = i;
 
@@ -160,7 +147,6 @@ function selectOption(i) {
     document.querySelectorAll('.option-btn')[i].classList.add('selected');
 }
 
-// ✅ Проверка ответа
 function checkAnswer() {
     if (userAnswers[currentQuestionIndex] === undefined) {
         alert('Выберите ответ');
@@ -172,16 +158,14 @@ function checkAnswer() {
     const isCorrect = selected === q.correct;
 
     if (!isCorrect) {
-    // ❌ уменьшаем жизнь
-    lives = Math.max(0, lives - 1);
-    updateLivesUI();
-
-    if (lives === 0) {
-        alert("💀 У вас закончились жизни! Тест остановлен.");
-        showResults();
-        return;
+        lives = Math.max(0, lives - 1);
+        updateLivesUI();
+        if (lives === 0) {
+            alert("💀 У вас закончились жизни! Тест остановлен.");
+            showResults();
+            return;
+        }
     }
-}
 
     testResults[currentQuestionIndex] = {
         question: q.question,
@@ -191,24 +175,19 @@ function checkAnswer() {
         explanation: q.explanation || ''
     };
 
-    // 🏆 XP логика
     if (isCorrect) {
         correctCount++;
         points += 10;
         streak++;
-
         if (streak === 3) {
             points += 20;
             achievements.push('🔥 Серия из 3!');
         }
-
     } else {
-        incorrectCount++;
         streak = 0;
     }
 
     document.getElementById('correctCount').textContent = correctCount;
-
     showFeedback();
 
     document.getElementById('checkBtn').style.display = 'none';
@@ -222,26 +201,21 @@ function checkAnswer() {
         });
 }
 
-// 💡 Подсказка
 function showHint() {
     const q = currentTest[currentQuestionIndex];
-
     if (!q.hint) {
         alert('Нет подсказки');
         return;
     }
-
     alert('💡 ' + q.hint);
 }
 
-// 📢 Feedback
 function showFeedback() {
     const q = currentTest[currentQuestionIndex];
     const selected = userAnswers[currentQuestionIndex];
     const isCorrect = selected === q.correct;
 
     const feedback = document.getElementById('feedback');
-
     feedback.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
 
     document.getElementById('feedbackTitle').innerHTML =
@@ -253,7 +227,6 @@ function showFeedback() {
     feedback.style.display = 'block';
 }
 
-// ➡️ Следующий
 function nextQuestion() {
     if (currentQuestionIndex < currentTest.length - 1) {
         currentQuestionIndex++;
@@ -263,7 +236,6 @@ function nextQuestion() {
     }
 }
 
-// ⬅️ Назад
 function previousQuestion() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
@@ -271,15 +243,12 @@ function previousQuestion() {
     }
 }
 
-// 📊 Прогресс
 function updateProgress() {
     const progress = ((currentQuestionIndex + 1) / currentTest.length) * 100;
     document.getElementById('progressFill').style.width = progress + '%';
-    document.getElementById('currentQuestion').textContent =
-        currentQuestionIndex + 1;
+    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
 }
 
-// 🏁 Результаты
 function showResults() {
     const total = currentTest.length;
     const percentage = Math.round((correctCount / total) * 100);
@@ -288,20 +257,20 @@ function showResults() {
         achievements.push('🏆 Идеально!');
         points += 50;
     }
-
     if (percentage >= 80) {
         achievements.push('⭐ Отличный результат');
     }
 
-    document.getElementById('scoreText').textContent =
-        `${correctCount}/${total}`;
+    document.getElementById('scoreText').textContent = `${correctCount}/${total}`;
+    document.getElementById('pointsText').textContent = points + ' XP';
 
-    document.getElementById('pointsText').textContent =
-        points + ' XP';
-
-    localStorage.setItem('totalPoints', points);
-
-    showAchievements();
+    const achievementsContainer = document.getElementById('achievementsList');
+    achievementsContainer.innerHTML = '';
+    achievements.forEach(a => {
+        const div = document.createElement('div');
+        div.textContent = a;
+        achievementsContainer.appendChild(div);
+    });
 
     document.getElementById('testContainer').style.display = 'none';
     document.getElementById('resultContainer').style.display = 'block';
@@ -309,44 +278,38 @@ function showResults() {
     sendResultsToBot(percentage);
 }
 
-// 🏅 Достижения
-function showAchievements() {
-    const container = document.getElementById('achievementsList');
-    container.innerHTML = '';
-
-    achievements.forEach(a => {
-        const div = document.createElement('div');
-        div.textContent = a;
-        container.appendChild(div);
-    });
-}
-
-// 📤 Отправка в Telegram
 function sendResultsToBot(percentage) {
     const data = {
         level: currentLevel,
         score: correctCount,
         total: currentTest.length,
-        percentage,
-        lives 
+        percentage: percentage,
+        lives: lives,
+        user_id: user_id
     };
-
     if (tg.sendData) {
         tg.sendData(JSON.stringify(data));
     }
 }
 
-// 🔄 Назад к уровням
 function goBackToLevels() {
     hideBackButton();
-
     document.getElementById('levelSelect').style.display = 'block';
     document.getElementById('testContainer').style.display = 'none';
     document.getElementById('resultContainer').style.display = 'none';
     document.getElementById('loadingScreen').style.display = 'none';
 }
 
-// 🚀 Init
-document.addEventListener('DOMContentLoaded', () => {
-    tg.ready();
-});
+// Автоматический старт, если передан уровень в URL
+if (currentLevelFromUrl) {
+    startTest(currentLevelFromUrl);
+} else {
+    // Иначе показываем выбор уровня и привязываем обработчики
+    document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            startTest(btn.dataset.level);
+        });
+    });
+}
+
+tg.ready();
