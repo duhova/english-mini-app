@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from aiogram.types import InlineKeyboardButton, CallbackQuery, InlineKeyboardMarkup, WebAppInfo, FSInputFile
 from aiogram import F
 
 # Настройка логирования
@@ -24,24 +24,25 @@ dp = Dispatcher()
 # ЖИЗНИ ДЛЯ ГРАММАТИЧЕСКИХ ТЕСТОВ (таблица в TESTS_DB)
 # ======================================================
 async def get_lives(user_id: int) -> int:
-    """Получить текущее количество жизней пользователя"""
     async with aiosqlite.connect(TESTS_DB) as db:
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_lives (
+        CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
-            lives INTEGER DEFAULT 3
+            username TEXT,
+            coins INTEGER DEFAULT 50,
+            correct_answers INTEGER DEFAULT 0,
+            lives INTEGER DEFAULT 3,
+            streak INTEGER DEFAULT 0
         )
         """)
+        await db.execute("""
+        INSERT OR IGNORE INTO users (user_id, username, coins, lives)
+        VALUES (?, ?, 50, 3)
+        """, (user_id, ""))
         await db.commit()
-        cursor = await db.execute("SELECT lives FROM user_lives WHERE user_id=?", (user_id,))
+        cursor = await db.execute("SELECT lives FROM users WHERE user_id=?", (user_id,))
         row = await cursor.fetchone()
-        if row:
-            return row[0]
-        else:
-            # Добавляем пользователя с 3 жизнями
-            await db.execute("INSERT INTO user_lives (user_id, lives) VALUES (?, ?)", (user_id, 3))
-            await db.commit()
-            return 3
+        return row[0] if row else 3
 
 async def decrease_life(user_id: int) -> int:
     """Уменьшить жизнь пользователя на 1 и вернуть оставшиеся жизни"""
@@ -62,23 +63,19 @@ async def reset_lives(user_id: int):
 # ЖИЗНИ ДЛЯ ТЕСТА НА ПЕРЕВОД СЛОВ (таблица в WORDS_DB)
 # ======================================================
 async def get_word_lives(user_id: int) -> int:
-    """Получить количество жизней для теста на перевод слов"""
     async with aiosqlite.connect(WORDS_DB) as db:
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_lives (
+        CREATE TABLE IF NOT EXISTS word_users (
             user_id INTEGER PRIMARY KEY,
+            coins INTEGER DEFAULT 50,
             lives INTEGER DEFAULT 3
         )
         """)
+        await db.execute("INSERT OR IGNORE INTO word_users (user_id, coins, lives) VALUES (?, 50, 3)", (user_id,))
         await db.commit()
-        cursor = await db.execute("SELECT lives FROM user_lives WHERE user_id=?", (user_id,))
+        cursor = await db.execute("SELECT lives FROM word_users WHERE user_id=?", (user_id,))
         row = await cursor.fetchone()
-        if row:
-            return row[0]
-        else:
-            await db.execute("INSERT INTO user_lives (user_id, lives) VALUES (?, ?)", (user_id, 3))
-            await db.commit()
-            return 3
+        return row[0] if row else 3
 
 async def decrease_word_life(user_id: int) -> int:
     """Уменьшить жизнь на 1, вернуть оставшиеся жизни"""
@@ -119,7 +116,36 @@ async def show_lives(message: types.Message):
     except Exception as e:
         logger.error(f"Ошибка в /lives: {e}")
         await message.answer("Произошла ошибка.")
-        
+async def increase_life(user_id: int, amount: int = 1, max_lives: int = 3) -> int:
+    """Увеличить количество жизней (грамматика) до max_lives."""
+    async with aiosqlite.connect(TESTS_DB) as db:
+        # Убедимся, что запись существует
+        await db.execute("INSERT OR IGNORE INTO user_lives (user_id, lives) VALUES (?, 3)", (user_id,))
+        cursor = await db.execute("SELECT lives FROM user_lives WHERE user_id=?", (user_id,))
+        lives = (await cursor.fetchone())[0]
+        new_lives = min(lives + amount, max_lives)
+        await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (new_lives, user_id))
+        await db.commit()
+        return new_lives
+
+async def increase_word_life(user_id: int, amount: int = 1, max_lives: int = 3) -> int:
+    """Увеличить количество жизней для слов."""
+    async with aiosqlite.connect(WORDS_DB) as db:
+        # Убедимся, что таблица и запись существуют
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS word_lives (
+            user_id INTEGER PRIMARY KEY,
+            lives INTEGER DEFAULT 3
+        )
+        """)
+        await db.execute("INSERT OR IGNORE INTO word_lives (user_id, lives) VALUES (?, 3)", (user_id,))
+        cursor = await db.execute("SELECT lives FROM word_lives WHERE user_id=?", (user_id,))
+        lives = (await cursor.fetchone())[0]
+        new_lives = min(lives + amount, max_lives)
+        await db.execute("UPDATE word_lives SET lives=? WHERE user_id=?", (new_lives, user_id))
+        await db.commit()
+        return new_lives
+           
 LEVELS = ["Начальный", "Средний", "Продвинутый"]
 
 
@@ -137,43 +163,72 @@ class UserState(StatesGroup):
 # КОНФИГУРАЦИЯ БАЗ ДАННЫХ
 # ======================================================
 WORDS_DB = "db.sqlite3"  # База со словами
-TESTS_DB = "bot.db"      # База с тестами
+TESTS_DB = "bot.db"
+MATERIALS_DIR = "study_materials"      # База с тестами
 
-
+# -------------------- Инициализация при запуске --------------------
 async def init_databases():
-    """Инициализация обеих баз данных"""
-    try:
-        # 1. Инициализация базы слов
-        async with aiosqlite.connect(WORDS_DB) as db:
-            await db.execute('''
-                CREATE TABLE IF NOT EXISTS words (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    word TEXT NOT NULL,
-                    transcription TEXT,
-                    translation TEXT NOT NULL,
-                    example_en TEXT,
-                    example_ru TEXT,
-                    level TEXT
-                )
-            ''')
-            await db.execute('''
-                CREATE TABLE IF NOT EXISTS web_results (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    level TEXT,
-                    score INTEGER,
-                    total INTEGER,
-                    ts DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            await db.execute('''
-                CREATE TABLE IF NOT EXISTS user_lives (
-                    user_id INTEGER PRIMARY KEY,
-                    lives INTEGER DEFAULT 3
-                )
-            ''')
-            await db.commit()
-            logger.info(f"База слов {WORDS_DB} проверена")
+    # Просто убеждаемся, что таблицы users и user_lives существуют
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            coins INTEGER DEFAULT 50,
+            correct_answers INTEGER DEFAULT 0,
+            lives INTEGER DEFAULT 3,
+            streak INTEGER DEFAULT 0
+        )
+        """)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS user_lives (
+            user_id INTEGER PRIMARY KEY,
+            lives INTEGER DEFAULT 3
+        )
+        """)
+        # ... и таблицы материалов уже созданы в db_init, но добавим для безопасности
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL UNIQUE
+        )
+        """)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS user_materials (
+            user_id INTEGER,
+            material_id INTEGER,
+            studied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, material_id)
+        )
+        """)
+        # Заполнить материалы из папки, если папка существует
+        if os.path.exists(MATERIALS_DIR):
+            files = [f for f in os.listdir(MATERIALS_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+            for fname in files:
+                await db.execute("INSERT OR IGNORE INTO materials (filename) VALUES (?)", (fname,))
+        await db.commit()
+
+    # База слов
+    async with aiosqlite.connect(WORDS_DB) as db:
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS words (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            word TEXT NOT NULL,
+            transcription TEXT,
+            translation TEXT NOT NULL,
+            example_english TEXT,
+            example_russian TEXT,
+            level TEXT
+        )
+        """)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS word_lives (
+            user_id INTEGER PRIMARY KEY,
+            lives INTEGER DEFAULT 3
+        )
+        """)
+        await db.commit()
+        logger.info(f"База слов {WORDS_DB} проверена")
 
         # 2. Проверка базы тестов
         async with aiosqlite.connect(TESTS_DB) as db:
@@ -187,11 +242,42 @@ async def init_databases():
                 count = await cursor.fetchone()
                 logger.info(f"В базе тестов найдено {count[0]} тестов")
 
-    except Exception as e:
-        logger.error(f"Ошибка инициализации БД: {e}")
-        raise
+async def get_unstudied_material(user_id: int):
+    async with aiosqlite.connect(TESTS_DB) as db:
+        cursor = await db.execute("""
+            SELECT m.id, m.filename
+            FROM materials m
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_materials um
+                WHERE um.user_id = ? AND um.material_id = m.id
+            )
+        """, (user_id,))
+        materials = await cursor.fetchall()
+        if not materials:
+            return None
+        return random.choice(materials)
 
+async def mark_material_studied(user_id: int, material_id: int):
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("INSERT OR IGNORE INTO user_materials (user_id, material_id) VALUES (?, ?)",
+                         (user_id, material_id))
+        await db.commit()
 
+async def add_coins(user_id: int, amount: int):
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("UPDATE users SET coins = coins + ? WHERE user_id=?", (amount, user_id))
+        await db.commit()
+
+async def spend_coins(user_id: int, amount: int) -> bool:
+    async with aiosqlite.connect(TESTS_DB) as db:
+        cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        if row and row[0] >= amount:
+            await db.execute("UPDATE users SET coins = coins - ? WHERE user_id=?", (amount, user_id))
+            await db.commit()
+            return True
+        return False
+    
 async def get_random_word(level=None):
     """Получение случайного слова из базы данных"""
     try:
@@ -294,7 +380,8 @@ async def start(message: types.Message, state: FSMContext):
             "Выбери действие:\n"
             "• Изучать слова - изучение слов с примерами\n"
             "• Грамматические тесты - тесты прямо в боте\n"
-            "• Тесты в мини-приложении - интерактивные тесты в WebApp",
+            "• Тесты в мини-приложении - интерактивные тесты в WebApp\n"
+            "• Методички",
             reply_markup=keyboard
         )
         logger.info(f"Пользователь {message.from_user.id} начал работу с ботом")
@@ -314,7 +401,8 @@ async def back_to_main(message: types.Message, state: FSMContext):
         kb = [
             [types.KeyboardButton(text="Изучать слова")],
             [types.KeyboardButton(text="Грамматические тесты (в боте)")],
-            [types.KeyboardButton(text="📱 Тесты в мини-приложении")]
+            [types.KeyboardButton(text="📱 Тесты в мини-приложении")],
+            [types.KeyboardButton(text="📘 Методичка")]   # новая кнопка
         ]
         keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
         await message.answer("Главное меню:", reply_markup=keyboard)
@@ -495,7 +583,8 @@ async def check_test_answer(message: types.Message, state: FSMContext):
         user_id = message.from_user.id
 
         if user_answer == correct_answer:
-            await message.answer("✅ Правильно! Отличная работа!")
+            await add_coins(user_id, 5)
+            await message.answer("✅ Правильно! +5 монет!")
         else:
             lives_left = await decrease_word_life(user_id)
             if lives_left > 0:
@@ -504,13 +593,21 @@ async def check_test_answer(message: types.Message, state: FSMContext):
                     f"❤️ Осталось жизней: {lives_left}"
                 )
             else:
+                # Жизни закончились
+                kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🔄 Восстановить жизни (за 10 монет)", callback_data="restore_word_lives")],
+                    [InlineKeyboardButton(text="🔁 Выбрать другой уровень слов", callback_data="choose_word_level")],
+                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="main_menu")]
+                ])
                 await message.answer(
                     f"❌ Неправильно. Правильный ответ: {correct_answer}\n"
-                    f"💀 У вас закончились жизни! Изучение слов остановлено."
+                    f"💀 У вас закончились жизни!",
+                    reply_markup=kb
                 )
                 await state.clear()
                 return
 
+        # Возвращаемся к изучению слов
         await state.set_state(UserState.learning_words)
         await state.update_data(test_answer=None)
 
@@ -525,6 +622,36 @@ async def check_test_answer(message: types.Message, state: FSMContext):
         logger.error(f"Ошибка в check_test_answer: {e}")
         await message.answer("Произошла ошибка.")
 
+@dp.message(F.text == "📘 Методичка")
+async def study_material(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+
+    # Получаем случайную неизученную методичку
+    material = await get_unstudied_material(user_id)
+    if not material:
+        await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
+        return
+
+    material_id, filename = material
+    file_path = os.path.join("study_materials", filename)
+    try:
+        photo = FSInputFile(file_path)
+        await message.answer_photo(photo, caption="📘 **Изучите методичку**\n\nПосле просмотра вы получите +5 монет.")
+    except Exception as e:
+        logger.error(f"Ошибка отправки методички: {e}")
+        await message.answer("Не удалось загрузить методичку.")
+        return
+
+    # Отмечаем изученной и начисляем монеты
+    await mark_material_studied(user_id, material_id)
+    await add_coins(user_id, 5)
+
+    # Показываем текущий баланс
+    async with aiosqlite.connect(TESTS_DB) as db:
+        cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        coins = row[0] if row else 0
+    await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.") 
 
 # ======================================================
 # MINI-APP TESTS (WebApp)
@@ -611,7 +738,10 @@ async def handle_webapp_result(message: types.Message):
         level = data.get("level", "Неизвестно")
         score = data.get("score", 0)
         total = data.get("total", 0)
-
+        coins_earned = data.get("coins_earned", 0)
+        if coins_earned > 0:
+            await add_coins(user_id, coins_earned)
+            
         async with aiosqlite.connect(WORDS_DB) as db:
             await db.execute(
                 "INSERT INTO web_results (user_id, level, score, total) VALUES (?, ?, ?, ?)",
@@ -653,21 +783,22 @@ async def handle_webapp_result(message: types.Message):
 # ======================================================
 @dp.message(F.text == "Грамматические тесты (в боте)")
 async def grammar_tests_menu(message: types.Message, state: FSMContext):
-    try:
-        kb = [[types.KeyboardButton(text=level)] for level in LEVELS]
-        kb.append([types.KeyboardButton(text="Назад")])
-        await state.set_state(UserState.grammar_select_level)
+    kb = [[types.KeyboardButton(text=level)] for level in LEVELS]
+    kb.append([types.KeyboardButton(text="Назад")])
+    await state.set_state(UserState.grammar_select_level)
 
-        user_id = message.from_user.id
-        grammar_lives = await get_lives(user_id)
+    user_id = message.from_user.id
+    async with aiosqlite.connect(TESTS_DB) as db:
+        # Гарантируем запись
+        await db.execute("INSERT OR IGNORE INTO users (user_id, username, lives) VALUES (?, ?, 3)", (user_id, message.from_user.username))
+        cursor = await db.execute("SELECT lives FROM users WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        grammar_lives = row[0] if row else 3
 
-        await message.answer(
-            f"Выберите уровень грамматики:\n\n❤️ Жизни для грамматических тестов: {grammar_lives}",
-            reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-        )
-    except Exception as e:
-        logger.error(f"Ошибка в grammar_tests_menu: {e}")
-        await message.answer("Произошла ошибка.")
+    await message.answer(
+        f"Выберите уровень грамматики:\n\n❤️ Жизни для грамматических тестов: {grammar_lives}",
+        reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    )
 
 
 @dp.message(UserState.grammar_select_level, F.text.in_(LEVELS))
@@ -676,10 +807,9 @@ async def grammar_start(message: types.Message, state: FSMContext):
         level = message.text
         await state.update_data(grammar_level=level)
 
-        # Используем поля option_a, option_b, option_c, correct
         async with aiosqlite.connect(TESTS_DB) as db:
             cur = await db.execute(
-                "SELECT id, question, option_a, option_b, option_c, correct FROM tests WHERE level=? ORDER BY RANDOM() LIMIT 1",
+                "SELECT id, question, option_a, option_b, option_c, correct, explanation FROM tests WHERE level=? ORDER BY RANDOM() LIMIT 1",
                 (level,)
             )
             row = await cur.fetchone()
@@ -688,18 +818,16 @@ async def grammar_start(message: types.Message, state: FSMContext):
             await message.answer("Нет тестов для этого уровня.")
             return
 
-        test_id, q, o1, o2, o3, correct = row
+        test_id, q, o1, o2, o3, correct, explanation = row
 
         await state.update_data(
             current_test=row,
-            correct_answer=correct
+            correct_answer=correct,
+            current_explanation=explanation   # сохраняем
         )
         await state.set_state(UserState.grammar_waiting_answer)
 
-        # Формируем варианты с номерами
         options = [("1. " + o1), ("2. " + o2), ("3. " + o3)]
-        # Добавляем четвёртый вариант, если есть? В таблице только три опции.
-        # Если нужен четвёртый, его нет. Оставим три.
         kb = [[types.KeyboardButton(text=opt)] for opt in options]
         kb.append([types.KeyboardButton(text="Назад")])
 
@@ -716,29 +844,104 @@ async def grammar_start(message: types.Message, state: FSMContext):
 async def grammar_check(message: types.Message, state: FSMContext):
     try:
         data = await state.get_data()
-        correct = data["correct_answer"]
+        correct = data.get("correct_answer")
+        explanation = data.get("current_explanation", "")
         user_id = message.from_user.id
 
-        # Пользователь нажимает кнопку "1. option", извлекаем номер
         user_choice = message.text.split('.')[0] if '.' in message.text else ''
-        if user_choice == correct:
-            await message.answer("✅ Правильно! Отличная работа!")
+        if user_choice == str(correct):
+            await add_coins(user_id, 5)
+            await message.answer("✅ Правильно! +5 монет!")
         else:
             new_lives = await decrease_life(user_id)
             if new_lives > 0:
-                await message.answer(f"❌ Неправильно! Правильный ответ: {correct}\n❤️ Осталось жизней: {new_lives}")
+                msg = f"❌ Неправильно! Правильный ответ: {correct}\n❤️ Осталось жизней: {new_lives}"
+                if explanation:
+                    msg += f"\n\n📖 Объяснение: {explanation}"
+                await message.answer(msg)
             else:
-                await message.answer(f"❌ Неправильно! Правильный ответ: {correct}\n💀 У вас закончились жизни! Тест завершён.")
+                # Жизни закончились – показываем инлайн-кнопки
+                msg = f"❌ Неправильно! Правильный ответ: {correct}\n💀 У вас закончились жизни!"
+                if explanation:
+                    msg += f"\n\n📖 Объяснение: {explanation}"
+                kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🔄 Восстановить жизни (10 монет)", callback_data="restore_grammar_lives")],
+                    [InlineKeyboardButton(text="🔁 Выбрать другой уровень", callback_data="choose_other_level")],
+                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="main_menu")]
+                ])
+                await message.answer(msg, reply_markup=kb)
                 await state.clear()
                 return
 
-        # Переходим к следующему вопросу
         await grammar_start(message, state)
-
     except Exception as e:
         logger.error(f"Ошибка в grammar_check: {e}")
         await message.answer("Произошла ошибка.")
 
+@dp.callback_query(lambda c: c.data == "restore_grammar_lives")
+async def restore_grammar_lives(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    if await spend_coins(user_id, 10):
+        await increase_life(user_id, amount=3, max_lives=3)
+        await callback.message.answer("✅ Жизни восстановлены! Теперь у вас 3 жизни.")
+        await grammar_tests_menu(callback.message, state)
+    else:
+        await callback.message.answer("❌ Недостаточно монет. Зарабатывайте монеты, изучая слова!")
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "restore_word_lives")
+async def restore_word_lives(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    if await spend_coins(user_id, 10):
+        await increase_word_life(user_id, amount=3, max_lives=3)
+        await callback.message.answer("✅ Жизни восстановлены! Теперь у вас 3 жизни.")
+        await learn_words(callback.message, state)
+    else:
+        await callback.message.answer("❌ Недостаточно монет.")
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "restore_word_lives")
+async def restore_word_lives(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    async with aiosqlite.connect(WORDS_DB) as db:
+        # Создаём таблицу, если её нет
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS word_users (
+            user_id INTEGER PRIMARY KEY,
+            coins INTEGER DEFAULT 0,
+            lives INTEGER DEFAULT 3
+        )
+        """)
+        # Создаём запись, если её нет
+        await db.execute("INSERT OR IGNORE INTO word_users (user_id, coins, lives) VALUES (?, 0, 3)", (user_id,))
+        await db.commit()
+
+        cursor = await db.execute("SELECT coins FROM word_users WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        if row and row[0] >= 10:
+            # Уменьшаем монеты и восстанавливаем жизни
+            await db.execute("UPDATE word_users SET coins = coins - 10, lives = 3 WHERE user_id=?", (user_id,))
+            await db.commit()
+            await callback.message.answer("✅ Жизни восстановлены! Теперь у вас 3 жизни.")
+            await learn_words(callback.message, state)  # Возвращаем к изучению слов
+        else:
+            await callback.message.answer("❌ Недостаточно монет. Зарабатывайте монеты, изучая слова!")
+    await callback.answer()    
+
+@dp.callback_query(lambda c: c.data == "choose_other_level")
+async def choose_other_level(callback: CallbackQuery, state: FSMContext):
+    await grammar_tests_menu(callback.message, state)
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "choose_word_level")
+async def choose_word_level(callback: CallbackQuery, state: FSMContext):
+    await learn_words(callback.message, state)
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "main_menu")
+async def main_menu_callback(callback: CallbackQuery, state: FSMContext):
+    await back_to_main(callback.message, state)
+    await callback.answer()
 
 # ======================================================
 # RUN
