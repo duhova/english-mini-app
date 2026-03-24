@@ -371,7 +371,8 @@ async def start(message: types.Message, state: FSMContext):
         kb = [
             [types.KeyboardButton(text="Изучать слова")],
             [types.KeyboardButton(text="Грамматические тесты (в боте)")],
-            [types.KeyboardButton(text="📱 Тесты в мини-приложении")]
+            [types.KeyboardButton(text="📱 Тесты в мини-приложении")],
+            [types.KeyboardButton(text="📘 Методичка")]
         ]
         keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
