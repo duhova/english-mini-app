@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📚 Тесты по английскому</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ... все стили остаются без изменений, только добавлен блок для жизней */
+        .lives-display {
+            display: inline-block;
+            background: #ffeb3b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="levelSelect">
+            <div class="header">
+                <h1>📚 Тесты по английскому</h1>
+                <p>Выберите уровень сложности:</p>
+            </div>
+            <div id="livesDisplay" class="lives-display" style="display: none;"></div>
+            <div class="level-buttons">
+                <button class="level-btn beginner" data-level="Начальный">🎯 Начальный уровень</button>
+                <button class="level-btn intermediate" data-level="Средний">⚡ Средний уровень</button>
+                <button class="level-btn advanced" data-level="Продвинутый">🚀 Продвинутый уровень</button>
+            </div>
+            <div style="text-align: center; margin-top: 30px; color: #666;">
+                <p>📊 Тесты по грамматике</p>
+                <p>✅ После ответа – объяснение</p>
+                <p>📈 В конце – подробная статистика</p>
+            </div>
+        </div>
+
+        <div id="loadingScreen" class="loading" style="display: none;">
+            <div class="loader"></div>
+            <div>Загрузка тестов...</div>
+        </div>
+
+        <div id="testContainer" class="test-container">
+            <div class="progress">
+                <div>Вопрос: <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span></div>
+                <div class="progress-bar"><div id="progressFill"></div></div>
+                <div>Правильно: <span id="correctCount">0</span></div>
+            </div>
+            <div id="livesDisplayTest" class="lives-display" style="margin-bottom: 10px;"></div>
+            <div class="question" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <div id="feedback" class="feedback">
+                <h3 id="feedbackTitle"></h3>
+                <div class="explanation" id="explanation"></div>
+            </div>
+            <div class="navigation">
+                <button class="nav-btn secondary" onclick="previousQuestion()" id="prevBtn">← Назад</button>
+                <button class="nav-btn secondary" onclick="showHint()" id="hintBtn">💡 Подсказка</button>
+                <button class="nav-btn primary" onclick="checkAnswer()" id="checkBtn">Проверить</button>
+                <button class="nav-btn primary" onclick="nextQuestion()" id="nextBtn" style="display: none;">Далее →</button>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="result">
+            <div class="emoji" id="resultEmoji">🎉</div>
+            <h2>Тест завершён!</h2>
+            <div class="score" id="scoreText">0/10</div>
+            <div class="score" id="pointsText">0 XP</div>
+            <div id="achievementsList"></div>
+            <div class="stats">
+                <div class="stat-card"><div class="stat-value" id="correctAnswers">0</div><div class="stat-label">Правильно</div></div>
+                <div class="stat-card"><div class="stat-value" id="incorrectAnswers">0</div><div class="stat-label">Ошибки</div></div>
+                <div class="stat-card"><div class="stat-value" id="percentage">0%</div><div class="stat-label">Результат</div></div>
+            </div>
+            <div class="result-text" id="resultText"></div>
+            <div class="review-section" id="reviewSection" style="display: none;">
+                <h3>📝 Обзор ошибок:</h3>
+                <div id="mistakesList"></div>
+            </div>
+            <button class="back-btn" onclick="goBackToLevels()">← Выбрать другой уровень</button>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // Получение параметров из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let user_id = urlParams.get('user_id');
+        let lives = parseInt(urlParams.get('lives')) || 3;
+        const levelFromUrl = urlParams.get('level');
+
+        let currentLevel = '';
+        let currentTest = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let testResults = [];
+        let correctCount = 0;
+        let incorrectCount = 0;
+
+        function updateLivesUI() {
+            const livesText = `❤️ Жизни: ${lives}`;
+            const livesDisplay = document.getElementById('livesDisplay');
+            const livesDisplayTest = document.getElementById('livesDisplayTest');
+            if (livesDisplay) livesDisplay.textContent = livesText;
+            if (livesDisplayTest) livesDisplayTest.textContent = livesText;
+        }
+
+        async function loadTests(level) {
+            try {
+                const response = await fetch('tests.json');
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                return data[level] || [];
+            } catch (e) {
+                console.error(e);
+                return [];
+            }
+        }
+
+        async function startTest(level) {
+            currentLevel = level;
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            testResults = [];
+            correctCount = 0;
+            incorrectCount = 0;
+
+            document.getElementById('levelSelect').style.display = 'none';
+            document.getElementById('loadingScreen').style.display = 'flex';
+
+            currentTest = await loadTests(level);
+            if (currentTest.length === 0) {
+                alert('Не удалось загрузить тесты');
+                goBackToLevels();
+                return;
+            }
+
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('testContainer').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('totalQuestions').textContent = currentTest.length;
+            updateLivesUI();
+            loadQuestion();
+            updateProgress();
+        }
+
+        function loadQuestion() {
+            const q = currentTest[currentQuestionIndex];
+            document.getElementById('questionText').textContent = `Вопрос ${currentQuestionIndex+1}: ${q.question}`;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                if (userAnswers[currentQuestionIndex] !== undefined) {
+                    btn.classList.add('disabled');
+                    if (i === q.correct) btn.classList.add('correct');
+                    if (userAnswers[currentQuestionIndex] === i && i !== q.correct) btn.classList.add('wrong');
+                }
+                if (userAnswers[currentQuestionIndex] === i) btn.classList.add('selected');
+                btn.innerHTML = `<span style="font-weight:bold; margin-right:10px;">${String.fromCharCode(65+i)}.</span>${opt}`;
+                if (userAnswers[currentQuestionIndex] === undefined) btn.onclick = () => selectOption(i);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            if (userAnswers[currentQuestionIndex] !== undefined) {
+                document.getElementById('checkBtn').style.display = 'none';
+                document.getElementById('nextBtn').style.display = 'block';
+                showFeedback();
+            } else {
+                document.getElementById('checkBtn').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('feedback').style.display = 'none';
+            }
+            updateProgress();
+        }
+
+        function selectOption(i) {
+            userAnswers[currentQuestionIndex] = i;
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.option-btn')[i].classList.add('selected');
+        }
+
+        function checkAnswer() {
+            if (userAnswers[currentQuestionIndex] === undefined) {
+                alert('Выберите ответ');
+                return;
+            }
+            const q = currentTest[currentQuestionIndex];
+            const selected = userAnswers[currentQuestionIndex];
+            const isCorrect = selected === q.correct;
+
+            if (!isCorrect) {
+                lives = Math.max(0, lives - 1);
+                updateLivesUI();
+                if (lives === 0) {
+                    alert("💀 У вас закончились жизни! Тест остановлен.");
+                    showResults();
+                    return;
+                }
+            }
+
+            testResults[currentQuestionIndex] = {
+                question: q.question,
+                userAnswer: selected,
+                correctAnswer: q.correct,
+                isCorrect: isCorrect,
+                explanation: q.explanation || ''
+            };
+
+            if (isCorrect) correctCount++;
+            else incorrectCount++;
+
+            document.getElementById('correctCount').textContent = correctCount;
+            showFeedback();
+
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.add('disabled');
+                btn.onclick = null;
+            });
+        }
+
+        function showFeedback() {
+            const q = currentTest[currentQuestionIndex];
+            const selected = userAnswers[currentQuestionIndex];
+            const isCorrect = selected === q.correct;
+            const feedback = document.getElementById('feedback');
+            feedback.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
+            document.getElementById('feedbackTitle').innerHTML = isCorrect ? '✅ Правильно!' : '❌ Неправильно';
+            const correctLetter = String.fromCharCode(65 + q.correct);
+            document.getElementById('explanation').innerHTML = `
+                <div><strong>Правильный ответ:</strong> ${correctLetter}. ${q.options[q.correct]}</div>
+                <div><strong>Объяснение:</strong> ${q.explanation || 'Нет дополнительного объяснения'}</div>
+            `;
+            feedback.style.display = 'block';
+        }
+
+        function showHint() {
+            const q = currentTest[currentQuestionIndex];
+            if (q.hint) alert('💡 ' + q.hint);
+            else alert('Нет подсказки');
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentTest.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex+1) / currentTest.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex+1;
+        }
+
+        function showResults() {
+            const total = currentTest.length;
+            const percentage = Math.round((correctCount / total) * 100);
+            document.getElementById('scoreText').textContent = `${correctCount}/${total}`;
+            document.getElementById('correctAnswers').textContent = correctCount;
+            document.getElementById('incorrectAnswers').textContent = incorrectCount;
+            document.getElementById('percentage').textContent = `${percentage}%`;
+
+            const emoji = document.getElementById('resultEmoji');
+            let msg = '';
+            if (percentage >= 90) { emoji.textContent = '🏆'; msg = 'Отлично! Вы эксперт!'; }
+            else if (percentage >= 70) { emoji.textContent = '👍'; msg = 'Хороший результат!'; }
+            else if (percentage >= 50) { emoji.textContent = '📚'; msg = 'Неплохо, есть над чем работать.'; }
+            else { emoji.textContent = '💪'; msg = 'Практика делает мастера! Продолжайте учиться!'; }
+            document.getElementById('resultText').textContent = msg;
+
+            if (incorrectCount > 0) {
+                const mistakesList = document.getElementById('mistakesList');
+                mistakesList.innerHTML = '';
+                testResults.forEach((res, idx) => {
+                    if (!res.isCorrect) {
+                        const q = currentTest[idx];
+                        const userLetter = String.fromCharCode(65 + res.userAnswer);
+                        const correctLetter = String.fromCharCode(65 + res.correctAnswer);
+                        mistakesList.innerHTML += `
+                            <div class="review-item review-incorrect">
+                                <div><strong>Вопрос ${idx+1}:</strong> ${res.question}</div>
+                                <div>❌ Ваш ответ: ${userLetter}. ${q.options[res.userAnswer]}</div>
+                                <div>✅ Правильно: ${correctLetter}. ${q.options[res.correctAnswer]}</div>
+                                <div>${res.explanation}</div>
+                            </div>
+                        `;
+                    }
+                });
+                document.getElementById('reviewSection').style.display = 'block';
+            }
+
+            document.getElementById('testContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            sendResultsToBot(percentage);
+        }
+
+        function sendResultsToBot(percentage) {
+            const data = {
+                level: currentLevel,
+                score: correctCount,
+                total: currentTest.length,
+                percentage: percentage,
+                lives: lives,
+                user_id: user_id
+            };
+            if (tg.sendData) tg.sendData(JSON.stringify(data));
+        }
+
+        function goBackToLevels() {
+            document.getElementById('levelSelect').style.display = 'block';
+            document.getElementById('testContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (levelFromUrl) {
+                startTest(levelFromUrl);
+            } else {
+                document.querySelectorAll('.level-btn').forEach(btn => {
+                    btn.onclick = () => startTest(btn.dataset.level);
+                });
+                if (user_id) {
+                    document.getElementById('livesDisplay').style.display = 'block';
+                    updateLivesUI();
+                }
+            }
+            tg.ready();
+        });
+    </script>
+</body>
+</html>
