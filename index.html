@@ -179,6 +179,15 @@
             border-color: #fa709a;
             background: #fff0f3;
         }
+        .hint {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 14px;
+            animation: fadeIn 0.3s ease;
+        }
 
         .option-btn.disabled {
             cursor: default;
@@ -610,8 +619,16 @@
 
         function showHint() {
             const q = currentTest[currentQuestionIndex];
-            if (q.hint) alert('💡 ' + q.hint);
-            else alert('Нет подсказки');
+            if (q.hint) {
+                const feedback = document.getElementById('feedback');
+                const explanationDiv = document.getElementById('explanation');
+                explanationDiv.innerHTML = `<strong>💡 Подсказка:</strong> ${q.hint}`;
+                feedback.className = 'feedback correct'; // или нейтральный стиль
+                feedback.style.display = 'block';
+                document.getElementById('feedbackTitle').innerHTML = '💡 Подсказка';
+            } else {
+                alert('Нет подсказки');
+            }
         }
 
         function nextQuestion() {
