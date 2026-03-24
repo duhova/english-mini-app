@@ -5,6 +5,7 @@ import os
 
 DB = "bot.db"
 JSON_FILE = "tests_full.json"
+MATERIALS_DIR = "study_materials"
 
 async def init_db():
     if not os.path.exists(JSON_FILE):
@@ -17,8 +18,6 @@ async def init_db():
     async with aiosqlite.connect(DB) as db:
         # Удаляем старую таблицу tests (если есть)
         await db.execute("DROP TABLE IF EXISTS tests")
-
-        # Создаём новую таблицу со всеми нужными полями
         await db.execute("""
         CREATE TABLE tests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,10 +32,9 @@ async def init_db():
         )
         """)
 
-        # Вставляем данные из JSON
+        # Вставляем данные
         for level, tests in tests_by_level.items():
             for t in tests:
-                # В JSON correct хранится как 0,1,2 → в базе будет 1,2,3
                 correct_num = t['correct'] + 1
                 await db.execute("""
                     INSERT INTO tests (level, question, option_a, option_b, option_c, correct, hint, explanation)
@@ -52,13 +50,43 @@ async def init_db():
                     t.get('explanation', '')
                 ))
 
-        # Таблица для жизней (оставляем как есть)
+        # Таблица пользователей для монет и жизней
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_lives (
+        CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
-            lives INTEGER DEFAULT 3
+            username TEXT,
+            coins INTEGER DEFAULT 50,
+            correct_answers INTEGER DEFAULT 0,
+            lives INTEGER DEFAULT 3,
+            streak INTEGER DEFAULT 0
         )
         """)
+     # --- Создание таблиц для методичек ---
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL UNIQUE
+        )
+        """)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS user_materials (
+            user_id INTEGER,
+            material_id INTEGER,
+            studied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, material_id)
+        )
+        """)
+        await db.commit()
+
+        # --- Заполнение таблицы materials, если она пуста ---
+        cursor = await db.execute("SELECT COUNT(*) FROM materials")
+        count = (await cursor.fetchone())[0]
+        if count == 0 and os.path.exists(MATERIALS_DIR):
+            files = [f for f in os.listdir(MATERIALS_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+            for filename in files:
+                await db.execute("INSERT OR IGNORE INTO materials (filename) VALUES (?)", (filename,))
+            await db.commit()
+            print(f"✅ Добавлено {len(files)} методичек в таблицу materials")
 
         await db.commit()
 
