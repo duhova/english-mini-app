@@ -952,7 +952,7 @@ async def grammar_check(message: types.Message, state: FSMContext):
         waiting_for_next = data.get("waiting_for_next", False)
         user_id = message.from_user.id
 
-        # Если пользователь уже ответил и нажал "Далее" – загружаем следующий вопрос
+        # Если уже отвечено и нажата "Далее" – переходим к следующему
         if waiting_for_next:
             await grammar_load_next_question(message, state)
             return
@@ -962,6 +962,7 @@ async def grammar_check(message: types.Message, state: FSMContext):
             await add_coins(user_id, 5)
             await message.answer("✅ Правильно! +5 монет!")
         else:
+            # Уменьшаем жизнь
             new_lives = await decrease_life(user_id)
             if new_lives > 0:
                 msg = f"❌ Неправильно! Правильный ответ: {correct}\n❤️ Осталось жизней: {new_lives}"
@@ -969,6 +970,7 @@ async def grammar_check(message: types.Message, state: FSMContext):
                     msg += f"\n\n📖 Объяснение: {explanation}"
                 await message.answer(msg)
             else:
+                # Жизни закончились
                 msg = f"❌ Неправильно! Правильный ответ: {correct}\n💀 У вас закончились жизни!"
                 if explanation:
                     msg += f"\n\n📖 Объяснение: {explanation}"
