@@ -90,9 +90,21 @@ async def get_lives(user_id: int) -> int:
         if row:
             return row[0]
         else:
+            # Если записи нет, создаём её с 3 жизнями
             await db.execute("INSERT INTO user_lives (user_id, lives) VALUES (?, 3)", (user_id,))
             await db.commit()
             return 3
+
+async def decrease_life(user_id: int) -> int:
+    lives = await get_lives(user_id)
+    print(f"DEBUG: decrease_life before: {lives}")
+    if lives > 0:
+        lives -= 1
+        async with aiosqlite.connect(DB_TESTS) as db:
+            await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (lives, user_id))
+            await db.commit()
+        print(f"DEBUG: decrease_life after: {lives}")
+    return lives
 
 async def decrease_life(user_id: int) -> int:
     lives = await get_lives(user_id)
@@ -102,14 +114,6 @@ async def decrease_life(user_id: int) -> int:
             await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (lives, user_id))
             await db.commit()
     return lives
-
-async def increase_life(user_id: int, amount: int = 1, max_lives: int = 3):
-    lives = await get_lives(user_id)
-    new_lives = min(lives + amount, max_lives)
-    async with aiosqlite.connect(DB_TESTS) as db:
-        await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (new_lives, user_id))
-        await db.commit()
-    return new_lives
 
 # ======================================================
 # ФУНКЦИИ ДЛЯ ЖИЗНЕЙ (тесты на перевод слов)
