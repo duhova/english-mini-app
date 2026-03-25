@@ -34,7 +34,6 @@ async def get_lives(user_id: int) -> int:
             username TEXT,
             coins INTEGER DEFAULT 50,
             correct_answers INTEGER DEFAULT 0,
-            lives INTEGER DEFAULT 3,
             streak INTEGER DEFAULT 0
         )
         """)
@@ -47,20 +46,31 @@ async def get_lives(user_id: int) -> int:
         row = await cursor.fetchone()
         return row[0] if row else 3
 
-async def decrease_life(user_id: int) -> int:
-    """Уменьшить жизнь пользователя на 1 и вернуть оставшиеся жизни"""
+async def get_lives(user_id: int) -> int:
+    """Получить количество жизней для грамматических тестов (таблица user_lives)"""
     async with aiosqlite.connect(TESTS_DB) as db:
-        lives = await get_lives(user_id)
-        lives = max(lives - 1, 0)
-        await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (lives, user_id))
-        await db.commit()
-        return lives
+        # Убедимся, что таблица существует
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS user_lives (
+            user_id INTEGER PRIMARY KEY,
+            lives INTEGER DEFAULT 3
+        )
+        """)
+        # Гарантируем, что запись есть
+        await db.execute("INSERT OR IGNORE INTO user_lives (user_id, lives) VALUES (?, 3)", (user_id,))
+        cursor = await db.execute("SELECT lives FROM user_lives WHERE user_id=?", (user_id,))
+        row = await cursor.fetchone()
+        return row[0] if row else 3
 
-async def reset_lives(user_id: int):
-    """Сброс жизней пользователя до 3"""
-    async with aiosqlite.connect(TESTS_DB) as db:
-        await db.execute("UPDATE user_lives SET lives=3 WHERE user_id=?", (user_id,))
-        await db.commit()
+async def decrease_life(user_id: int) -> int:
+    """Уменьшить жизнь на 1, вернуть оставшееся количество"""
+    lives = await get_lives(user_id)
+    if lives > 0:
+        lives -= 1
+        async with aiosqlite.connect(TESTS_DB) as db:
+            await db.execute("UPDATE user_lives SET lives=? WHERE user_id=?", (lives, user_id))
+            await db.commit()
+    return lives
 
 # ======================================================
 # ЖИЗНИ ДЛЯ ТЕСТА НА ПЕРЕВОД СЛОВ (таблица в WORDS_DB)
@@ -95,6 +105,12 @@ async def reset_word_lives(user_id: int):
         await db.execute("INSERT INTO user_lives(user_id, lives) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET lives=?", (user_id, 3, 3))
         await db.commit()
 
+async def reset_lives(user_id: int):
+    """Сбросить жизни до 3"""
+    async with aiosqlite.connect(TESTS_DB) as db:
+        await db.execute("UPDATE user_lives SET lives=3 WHERE user_id=?", (user_id,))
+        await db.commit()
+
 # ======================================================
 # КОМАНДА /lives
 # ======================================================
@@ -105,8 +121,10 @@ async def show_lives(message: types.Message):
         grammar_lives = await get_lives(user_id)
         word_lives = await get_word_lives(user_id)
 
-        await message.answer(f"❤️ Жизни для грамматических тестов: {grammar_lives}\n"
-                             f"📝 Жизни для перевода слов: {word_lives}")
+        await message.answer(
+            f"❤️ Жизни для грамматических тестов: {grammar_lives}\n"
+            f"📝 Жизни для перевода слов: {word_lives}"
+        )
 
         if grammar_lives == 0:
             await reset_lives(user_id)
@@ -115,7 +133,6 @@ async def show_lives(message: types.Message):
         if word_lives == 0:
             await reset_word_lives(user_id)
             await message.answer("💡 Жизни для перевода слов восстановлены до 3.")
-
     except Exception as e:
         logger.error(f"Ошибка в /lives: {e}")
         await message.answer("Произошла ошибка.")
@@ -374,10 +391,10 @@ async def start(message: types.Message, state: FSMContext):
     # Гарантируем, что пользователь есть в таблице users с 50 монетами и 3 жизнями
     async with aiosqlite.connect(TESTS_DB) as db:
         await db.execute("""
-            INSERT OR IGNORE INTO users (user_id, username, coins, lives)
+            INSERT OR IGNORE INTO users (user_id, username, coins)
             VALUES (?, ?, 50, 3)
         """, (user_id, username))
-        await db.commit()
+    await db.commit()
     try:
         await state.clear()
 
@@ -842,25 +859,19 @@ async def handle_webapp_result(message: types.Message):
 async def grammar_tests_menu(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
 
-    # Гарантируем, что запись lives есть
+    # Гарантируем, что запись lives для грамматики существует
     async with aiosqlite.connect(TESTS_DB) as db:
         await db.execute("INSERT OR IGNORE INTO user_lives (user_id, lives) VALUES (?, 3)", (user_id,))
 
-    lives = await get_lives(user_id)  
+    # Получаем текущее количество жизней из этой таблицы
+    lives = await get_lives(user_id)   # get_lives работает с user_lives
+
     kb = [[types.KeyboardButton(text=level)] for level in LEVELS]
     kb.append([types.KeyboardButton(text="Назад")])
     await state.set_state(UserState.grammar_select_level)
 
-    user_id = message.from_user.id
-    async with aiosqlite.connect(TESTS_DB) as db:
-        # Гарантируем запись
-        await db.execute("INSERT OR IGNORE INTO users (user_id, username, lives) VALUES (?, ?, 3)", (user_id, message.from_user.username))
-        cursor = await db.execute("SELECT lives FROM users WHERE user_id=?", (user_id,))
-        row = await cursor.fetchone()
-        grammar_lives = row[0] if row else 3
-
     await message.answer(
-        f"Выберите уровень грамматики:\n\n❤️ Жизни для грамматических тестов: {grammar_lives}",
+        f"Выберите уровень грамматики:\n\n❤️ Жизни для грамматических тестов: {lives}",
         reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
     )
 
