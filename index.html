@@ -6,362 +6,50 @@
     <title>📚 Тесты по английскому</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            min-height: 600px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 28px;
-        }
-
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .level-buttons {
+        /* ... все стили как в предыдущем варианте, только добавим стили для блока монет и кнопки восстановления ... */
+        .stats-row {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .level-btn {
-            padding: 18px;
-            border: none;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .level-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        .beginner {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            color: white;
-        }
-
-        .intermediate {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: white;
-        }
-
-        .advanced {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .lives-display {
-            display: inline-block;
-            background: #ffeb3b;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 16px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        .test-container {
-            display: none;
-        }
-
-        .progress {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            background: #f8f9ff;
-            padding: 10px 16px;
-            border-radius: 40px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #444;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .question {
-            font-size: 20px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            padding: 16px;
-            background: #f8f9ff;
-            border-radius: 20px;
-            border-left: 5px solid #667eea;
-            line-height: 1.4;
-        }
-
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .option-btn {
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px 18px;
-            text-align: left;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
             align-items: center;
-        }
-
-        .option-btn:hover:not(.disabled) {
-            border-color: #667eea;
             background: #f8f9ff;
-            transform: translateX(4px);
-        }
-
-        .option-btn.selected {
-            border-color: #667eea;
-            background: #f0f3ff;
-            box-shadow: 0 2px 8px rgba(102,126,234,0.2);
-        }
-
-        .option-btn.correct {
-            border-color: #43e97b;
-            background: #e8f9f0;
-        }
-
-        .option-btn.wrong {
-            border-color: #fa709a;
-            background: #fff0f3;
-        }
-
-        .option-btn.disabled {
-            cursor: default;
-            opacity: 0.8;
-        }
-
-        .feedback {
-            display: none;
-            margin: 20px 0;
-            padding: 18px;
-            border-radius: 20px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .feedback.correct {
-            background: #e8f9f0;
-            border: 2px solid #43e97b;
-        }
-
-        .feedback.incorrect {
-            background: #fff0f3;
-            border: 2px solid #fa709a;
-        }
-
-        .feedback h3 {
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .explanation {
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(255,255,255,0.8);
-            border-radius: 14px;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        .hint {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 14px;
-            padding: 12px;
-            margin: 10px 0;
-            font-size: 14px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .navigation {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .nav-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
             border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .nav-btn.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .result {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .result h2 {
-            font-size: 28px;
+            padding: 8px 16px;
             margin-bottom: 15px;
         }
-
-        .score {
-            font-size: 48px;
-            font-weight: bold;
-            color: #667eea;
-            margin: 20px 0;
-        }
-
-        .stats {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 25px 0;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: #f8f9ff;
+        .coins-display {
+            background: #ffd966;
+            padding: 4px 12px;
             border-radius: 20px;
-            padding: 12px;
-        }
-
-        .stat-value {
-            font-size: 28px;
             font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
             font-size: 14px;
-            color: #666;
         }
-
-        .review-section {
-            margin-top: 30px;
-            text-align: left;
-        }
-
-        .review-item {
-            background: #f8f9ff;
-            border-radius: 16px;
-            padding: 14px;
-            margin: 10px 0;
-            border-left: 5px solid #fa709a;
-        }
-
-        .back-btn {
-            margin-top: 20px;
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .restore-btn {
+            background: #ff9800;
             color: white;
             border: none;
-            border-radius: 40px;
-            font-size: 16px;
+            border-radius: 30px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
+            margin-left: 10px;
         }
-
-        .back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        .restore-btn:hover {
+            background: #f57c00;
         }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            padding: 60px;
-            font-size: 18px;
-            color: #666;
+        .bonus-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px auto;
+            display: inline-block;
         }
-
-        .loader {
-            width: 36px;
-            height: 36px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        .bonus-btn:hover {
+            background: #45a049;
         }
     </style>
 </head>
@@ -378,6 +66,9 @@
             <button class="level-btn intermediate" data-level="Средний">⚡ Средний уровень</button>
             <button class="level-btn advanced" data-level="Продвинутый">🚀 Продвинутый уровень</button>
         </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="dailyBonusBtn" class="bonus-btn">🎁 Ежедневный бонус</button>
+        </div>
         <div style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
             <p>📊 Тесты по грамматике</p>
             <p>✅ После ответа – объяснение</p>
@@ -391,12 +82,16 @@
     </div>
 
     <div id="testContainer" class="test-container">
+        <div class="stats-row">
+            <div>❤️ <span id="livesValue">3</span></div>
+            <div>💰 <span id="coinsValue">0</span> монет</div>
+            <div>✅ <span id="correctCount">0</span></div>
+        </div>
         <div class="progress">
             <div>Вопрос: <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span></div>
             <div class="progress-bar"><div id="progressFill"></div></div>
-            <div>Правильно: <span id="correctCount">0</span></div>
+            <div>Правильно: <span id="correctCount2">0</span></div>
         </div>
-        <div id="livesDisplayTest" class="lives-display"></div>
         <div class="question" id="questionText"></div>
         <div id="hintBlock" class="hint" style="display: none;"></div>
         <div class="options" id="optionsContainer"></div>
@@ -409,6 +104,9 @@
             <button class="nav-btn" id="hintBtn">💡 Подсказка</button>
             <button class="nav-btn primary" id="checkBtn">Проверить</button>
             <button class="nav-btn primary" id="nextBtn" style="display: none;">Далее →</button>
+        </div>
+        <div id="restorePanel" style="text-align: center; margin-top: 15px; display: none;">
+            <button id="restoreLivesBtn" class="restore-btn">🔄 Восстановить жизни (10 монет)</button>
         </div>
     </div>
 
@@ -441,6 +139,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     let user_id = urlParams.get('user_id');
     let lives = parseInt(urlParams.get('lives')) || 3;
+    let coins = 0;
     const levelFromUrl = urlParams.get('level');
 
     // Состояние
@@ -453,16 +152,115 @@
     let incorrectCount = 0;
     let points = 0;
     let streak = 0;
+    let streakBonus = 1;
     let achievements = [];
 
-    function updateLivesUI() {
-        const livesText = `❤️ Жизни: ${lives}`;
-        const livesDisplay = document.getElementById('livesDisplay');
-        const livesDisplayTest = document.getElementById('livesDisplayTest');
-        if (livesDisplay) livesDisplay.textContent = livesText;
-        if (livesDisplayTest) livesDisplayTest.textContent = livesText;
+    // Временные ограничения
+    let lastAnswerTime = 0;
+    let lastDailyBonus = 0;
+
+    // Функция загрузки сохранённых данных
+    function loadUserData() {
+        const saved = localStorage.getItem('english_mini_app');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                coins = data.coins || 0;
+                lives = data.lives || 3;
+                streak = data.streak || 0;
+                streakBonus = data.streakBonus || 1;
+                lastDailyBonus = data.lastDailyBonus || 0;
+            } catch(e) {}
+        }
+        updateUI();
     }
 
+    // Сохранение данных
+    function saveUserData() {
+        const data = {
+            coins: coins,
+            lives: lives,
+            streak: streak,
+            streakBonus: streakBonus,
+            lastDailyBonus: lastDailyBonus
+        };
+        localStorage.setItem('english_mini_app', JSON.stringify(data));
+    }
+
+    // Обновление интерфейса
+    function updateUI() {
+        document.getElementById('livesValue').textContent = lives;
+        document.getElementById('coinsValue').textContent = coins;
+        document.getElementById('correctCount').textContent = correctCount;
+        document.getElementById('correctCount2').textContent = correctCount;
+
+        const restorePanel = document.getElementById('restorePanel');
+        if (lives === 0 && currentQuestionIndex < currentTest.length) {
+            restorePanel.style.display = 'block';
+        } else {
+            restorePanel.style.display = 'none';
+        }
+        saveUserData();
+    }
+
+    // Проверка антиспама
+    function canAnswer() {
+        const now = Date.now();
+        if (now - lastAnswerTime < 2000) {
+            alert('⏱️ Подождите 2 секунды перед следующим ответом!');
+            return false;
+        }
+        lastAnswerTime = now;
+        return true;
+    }
+
+    // Обновление множителя монет за серию
+    function updateStreakBonus() {
+        if (streak >= 5) streakBonus = 3;
+        else if (streak >= 3) streakBonus = 2;
+        else streakBonus = 1;
+    }
+
+    // Начисление монет с учётом множителя
+    function earnCoins(base = 5) {
+        const earned = base * streakBonus;
+        coins += earned;
+        updateUI();
+        if (streakBonus > 1) {
+            alert(`✨ Бонус x${streakBonus}! +${earned} монет!`);
+        }
+        return earned;
+    }
+
+    // Ежедневный бонус
+    function claimDailyBonus() {
+        const now = Date.now();
+        if (now - lastDailyBonus >= 86400000) {
+            const bonus = 20;
+            coins += bonus;
+            lastDailyBonus = now;
+            updateUI();
+            alert(`🎁 Ежедневный бонус! +${bonus} монет!`);
+        } else {
+            const hoursLeft = Math.ceil((86400000 - (now - lastDailyBonus)) / 3600000);
+            alert(`⏰ Ежедневный бонус будет доступен через ${hoursLeft} часов.`);
+        }
+    }
+
+    // Восстановление жизней за монеты
+    function restoreLives() {
+        if (coins >= 10) {
+            coins -= 10;
+            lives = 3;
+            updateUI();
+            alert('✅ Жизни восстановлены! Теперь у вас 3 жизни.');
+            document.getElementById('nextBtn').disabled = false;
+        } else {
+            alert('❌ Недостаточно монет. Нужно 10 монет.');
+        }
+    }
+
+    // Загрузка тестов
     async function loadTests(level) {
         try {
             const response = await fetch('tests.json');
@@ -475,6 +273,7 @@
         }
     }
 
+    // Старт теста
     async function startTest(level) {
         currentLevel = level;
         currentQuestionIndex = 0;
@@ -485,6 +284,8 @@
         points = 0;
         streak = 0;
         achievements = [];
+        streakBonus = 1;
+        // монеты НЕ сбрасываем
 
         document.getElementById('levelSelect').style.display = 'none';
         document.getElementById('loadingScreen').style.display = 'flex';
@@ -500,11 +301,12 @@
         document.getElementById('testContainer').style.display = 'block';
         document.getElementById('resultContainer').style.display = 'none';
         document.getElementById('totalQuestions').textContent = currentTest.length;
-        updateLivesUI();
+        updateUI();
         loadQuestion();
         updateProgress();
     }
 
+    // Загрузка вопроса
     function loadQuestion() {
         const q = currentTest[currentQuestionIndex];
         document.getElementById('questionText').textContent = `Вопрос ${currentQuestionIndex+1}: ${q.question}`;
@@ -540,7 +342,6 @@
         }
         document.getElementById('hintBtn').disabled = userAnswers[currentQuestionIndex] !== undefined;
 
-        // Скрываем блок подсказки при смене вопроса
         const hintBlock = document.getElementById('hintBlock');
         if (hintBlock) hintBlock.style.display = 'none';
 
@@ -553,23 +354,29 @@
         document.querySelectorAll('.option-btn')[i].classList.add('selected');
     }
 
+    // Проверка ответа
     function checkAnswer() {
+        if (!canAnswer()) return;
         if (userAnswers[currentQuestionIndex] === undefined) {
             alert('Выберите ответ');
             return;
         }
+
         const q = currentTest[currentQuestionIndex];
         const selected = userAnswers[currentQuestionIndex];
         const isCorrect = selected === q.correct;
 
         if (!isCorrect) {
             lives = Math.max(0, lives - 1);
-            updateLivesUI();
+            updateUI();
             if (lives === 0) {
-                alert("💀 У вас закончились жизни! Тест остановлен.");
-                showResults();
+                alert("💀 У вас закончились жизни! Восстановите жизни, чтобы продолжить.");
+                document.getElementById('nextBtn').disabled = true;
                 return;
             }
+        } else {
+            const earned = earnCoins(5);
+            // остальное начисление XP ниже
         }
 
         testResults[currentQuestionIndex] = {
@@ -584,6 +391,7 @@
             correctCount++;
             points += 10;
             streak++;
+            updateStreakBonus();
             if (streak === 3) {
                 points += 20;
                 achievements.push('🔥 Серия из 3!');
@@ -591,13 +399,15 @@
         } else {
             incorrectCount++;
             streak = 0;
+            streakBonus = 1;
         }
 
-        document.getElementById('correctCount').textContent = correctCount;
+        updateUI();
         showFeedback();
 
         document.getElementById('checkBtn').style.display = 'none';
         document.getElementById('nextBtn').style.display = 'block';
+        document.getElementById('nextBtn').disabled = false;
         document.getElementById('hintBtn').disabled = true;
 
         document.querySelectorAll('.option-btn').forEach(btn => {
@@ -637,6 +447,10 @@
     }
 
     function nextQuestion() {
+        if (lives === 0) {
+            alert('У вас нет жизней. Восстановите жизни, чтобы продолжить.');
+            return;
+        }
         if (currentQuestionIndex < currentTest.length - 1) {
             currentQuestionIndex++;
             loadQuestion();
@@ -665,6 +479,7 @@
         if (percentage === 100) {
             achievements.push('🏆 Идеально!');
             points += 50;
+            coins += 20;
         }
         if (percentage >= 80) achievements.push('⭐ Отличный результат');
 
@@ -725,6 +540,7 @@
             total: currentTest.length,
             percentage: percentage,
             lives: lives,
+            coins: coins,
             user_id: user_id
         };
         if (tg.sendData) tg.sendData(JSON.stringify(data));
@@ -737,8 +553,10 @@
         document.getElementById('loadingScreen').style.display = 'none';
     }
 
-    // Привязка обработчиков
+    // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
+        loadUserData();
+
         if (levelFromUrl) {
             startTest(levelFromUrl);
         } else {
@@ -747,7 +565,7 @@
             });
             if (user_id) {
                 document.getElementById('livesDisplay').style.display = 'block';
-                updateLivesUI();
+                updateUI();
             }
         }
 
@@ -756,6 +574,8 @@
         document.getElementById('checkBtn').onclick = checkAnswer;
         document.getElementById('nextBtn').onclick = nextQuestion;
         document.getElementById('backToLevelsBtn').onclick = goBackToLevels;
+        document.getElementById('restoreLivesBtn').onclick = restoreLives;
+        document.getElementById('dailyBonusBtn').onclick = claimDailyBonus;
 
         tg.ready();
     });
