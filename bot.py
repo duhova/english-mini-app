@@ -545,7 +545,7 @@ async def show_balance(message: types.Message):
         cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
         row = await cursor.fetchone()
         coins = row[0] if row else 0
-    await message.answer(f"💰 Ваш баланс: **{coins}** монет.", parse_mode="HTML")
+    await message.answer(f"💰 Ваш баланс: {coins} монет.", parse_mode="HTML")
 
 @dp.message(F.text == "Следующее слово")
 async def next_word(message: types.Message, state: FSMContext):
@@ -647,39 +647,70 @@ async def study_material(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     username = message.from_user.username or ""
 
-    # Гарантируем запись в users
+    # Проверка, сколько методичек изучил пользователь за сегодня
     async with aiosqlite.connect(TESTS_DB) as db:
-        await db.execute("INSERT OR IGNORE INTO users (user_id, username, coins, lives) VALUES (?, ?, 50, 3)", (user_id, username))
+        # Подсчёт изученных сегодня
+        cursor = await db.execute("""
+            SELECT COUNT(*) FROM user_materials
+            WHERE user_id = ? AND date(studied_at) = date('now')
+        """, (user_id,))
+        today_count = (await cursor.fetchone())[0]
+
+        MAX_DAILY_MATERIALS = 5  # максимум 5 методичек в день
+        if today_count >= MAX_DAILY_MATERIALS:
+            await message.answer(f"📚 Вы уже изучили {MAX_DAILY_MATERIALS} методичек сегодня. Завтра будут новые!")
+            return
+
+        # Получаем случайную неизученную методичку
+        cursor = await db.execute("""
+            SELECT m.id, m.filename
+            FROM materials m
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_materials um
+                WHERE um.user_id = ? AND um.material_id = m.id
+            )
+        """, (user_id,))
+        material = await cursor.fetchone()
+
+        if not material:
+            await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
+            return
+
+        material_id, filename = material
+        file_path = os.path.join(MATERIALS_DIR, filename)
+
+        # Проверка, не изучал ли пользователь эту методичку сегодня (дублирование, но на всякий случай)
+        cursor = await db.execute("""
+            SELECT 1 FROM user_materials
+            WHERE user_id = ? AND material_id = ? AND date(studied_at) = date('now')
+        """, (user_id, material_id))
+        if await cursor.fetchone():
+            await message.answer("⏳ Эту методичку вы уже изучали сегодня. Попробуйте завтра!")
+            return
+
+        try:
+            photo = FSInputFile(file_path)
+            await message.answer_photo(photo, caption="📘 **Изучите методичку**\n\nПосле просмотра вы получите +5 монет.")
+        except Exception as e:
+            logger.error(f"Ошибка отправки методички: {e}")
+            await message.answer("Не удалось загрузить методичку.")
+            return
+
+        # Отмечаем изученной (с текущим временем)
+        await db.execute("INSERT INTO user_materials (user_id, material_id) VALUES (?, ?)", (user_id, material_id))
         await db.commit()
 
-    material = await get_unstudied_material(user_id)
-    if not material:
-        await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
-        await back_to_main(message, state)   # возвращаем в главное меню
-        return
+        # Начисляем монеты
+        await add_coins(user_id, 5)
 
-    material_id, filename = material
-    file_path = os.path.join(MATERIALS_DIR, filename)
-    try:
-        photo = FSInputFile(file_path)
-        await message.answer_photo(photo, caption="📘 **Изучите методичку**\n\nПосле просмотра вы получите +5 монет.")
-    except Exception as e:
-        logger.error(f"Ошибка отправки методички: {e}")
-        await message.answer("Не удалось загрузить методичку.")
-        return
-
-    await mark_material_studied(user_id, material_id)
-    await add_coins(user_id, 5)
-
-    # Получаем новый баланс
-    async with aiosqlite.connect(TESTS_DB) as db:
+        # Получаем новый баланс
         cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
         row = await cursor.fetchone()
         coins = row[0] if row else 0
 
-    await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.")
+        remaining = MAX_DAILY_MATERIALS - (today_count + 1)
+        await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.\n📖 Сегодня изучено {today_count + 1}/{MAX_DAILY_MATERIALS} методичек.")
 
-    # Возвращаем главное меню, чтобы пользователь мог продолжить
     await back_to_main(message, state)
 
 # ======================================================
