@@ -1,6 +1,7 @@
 import aiosqlite
 import os
 import asyncio
+import sqlite3
 import json
 import random
 import logging
@@ -274,22 +275,33 @@ async def get_unstudied_material(user_id: int):
         return random.choice(materials)
 
 async def mark_material_studied(user_id: int, material_id: int):
-    async with aiosqlite.connect(TESTS_DB) as db:
-        await db.execute("INSERT OR IGNORE INTO user_materials (user_id, material_id) VALUES (?, ?)",
-                         (user_id, material_id))
-        await db.commit()
+    for attempt in range(3):
+        try:
+            async with aiosqlite.connect(TESTS_DB, timeout=10) as db:
+                await db.execute(
+                    "INSERT OR IGNORE INTO user_materials (user_id, material_id) VALUES (?, ?)",
+                    (user_id, material_id)
+                )
+                await db.commit()
+                return
+        except sqlite3.OperationalError as e:
+            if "database is locked" in str(e) and attempt < 2:
+                await asyncio.sleep(0.5)
+                continue
+            raise
 
 async def add_coins(user_id: int, amount: int):
-    async with aiosqlite.connect(TESTS_DB) as db:
-        await db.execute("UPDATE users SET coins = coins + ? WHERE user_id=?", (amount, user_id))
+    async with aiosqlite.connect(TESTS_DB, timeout=10) as db:
+        await db.execute("INSERT OR IGNORE INTO users (user_id, coins) VALUES (?, 50)", (user_id,))
+        await db.execute("UPDATE users SET coins = coins + ? WHERE user_id = ?", (amount, user_id))
         await db.commit()
 
 async def spend_coins(user_id: int, amount: int) -> bool:
-    async with aiosqlite.connect(TESTS_DB) as db:
-        cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
+    async with aiosqlite.connect(TESTS_DB, timeout=10) as db:
+        cursor = await db.execute("SELECT coins FROM users WHERE user_id = ?", (user_id,))
         row = await cursor.fetchone()
         if row and row[0] >= amount:
-            await db.execute("UPDATE users SET coins = coins - ? WHERE user_id=?", (amount, user_id))
+            await db.execute("UPDATE users SET coins = coins - ? WHERE user_id = ?", (amount, user_id))
             await db.commit()
             return True
         return False
@@ -663,65 +675,79 @@ async def study_material(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     now = time.time()
 
-    # 1. Коолдаун 10 секунд между запросами (защита от спама)
+    # Антиспам 10 секунд
     if user_id in last_material_request and now - last_material_request[user_id] < 10:
         await message.answer("⏳ Подождите немного перед следующей методичкой.")
         return
     last_material_request[user_id] = now
 
-    # 2. Проверяем, сколько методичек пользователь уже изучил сегодня
-    async with aiosqlite.connect(TESTS_DB) as db:
-        cursor = await db.execute("""
-            SELECT COUNT(*) FROM user_materials
-            WHERE user_id = ? AND date(studied_at) = date('now', 'localtime')
-        """, (user_id,))
-        today_count = (await cursor.fetchone())[0]
-
-        if today_count >= MAX_DAILY_MATERIALS:
-            await message.answer(f"📚 Вы уже изучили {MAX_DAILY_MATERIALS} методичек сегодня. Возвращайтесь завтра!")
-            return
-
-        # 3. Получаем случайную неизученную методичку
-        cursor = await db.execute("""
-            SELECT m.id, m.filename
-            FROM materials m
-            WHERE NOT EXISTS (
-                SELECT 1 FROM user_materials um
-                WHERE um.user_id = ? AND um.material_id = m.id
-            )
-        """, (user_id,))
-        material = await cursor.fetchone()
-
-    if not material:
-        await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
-        return
-
-    material_id, filename = material
-    file_path = os.path.join(MATERIALS_DIR, filename)
-
-    # 4. Отправляем фото
     try:
-        photo = FSInputFile(file_path)
-        await message.answer_photo(photo, caption="📘 **Изучите методичку**\n\nПосле просмотра вы получите +5 монет.")
+        async with aiosqlite.connect(TESTS_DB, timeout=10) as db:
+            # Создаём пользователя, если нет
+            await db.execute(
+                "INSERT OR IGNORE INTO users (user_id, username, coins) VALUES (?, ?, 50)",
+                (user_id, message.from_user.username or "")
+            )
+
+            # Дневной лимит
+            cursor = await db.execute("""
+                SELECT COUNT(*) FROM user_materials
+                WHERE user_id = ? AND date(studied_at) = date('now', 'localtime')
+            """, (user_id,))
+            today_count = (await cursor.fetchone())[0]
+            if today_count >= MAX_DAILY_MATERIALS:
+                await message.answer(f"📚 Вы уже изучили {MAX_DAILY_MATERIALS} методичек сегодня. Возвращайтесь завтра!")
+                return
+
+            # Поиск неизученной методички
+            cursor = await db.execute("""
+                SELECT m.id, m.filename
+                FROM materials m
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM user_materials um
+                    WHERE um.user_id = ? AND um.material_id = m.id
+                )
+            """, (user_id,))
+            material = await cursor.fetchone()
+            if not material:
+                await message.answer("🎉 Поздравляем! Вы изучили все доступные методички. Скоро добавятся новые!")
+                return
+
+            material_id, filename = material
+            file_path = os.path.join(MATERIALS_DIR, filename)
+
+            # Отправляем фото
+            try:
+                photo = FSInputFile(file_path)
+                await message.answer_photo(photo, caption="📘 Изучите методичку\n\nПосле просмотра вы получите +5 монет.")
+            except Exception as e:
+                logger.error(f"Ошибка отправки методички: {e}")
+                await message.answer("Не удалось загрузить методичку.")
+                return
+
+            # Отмечаем изучение и начисляем монеты
+            await db.execute(
+                "INSERT OR IGNORE INTO user_materials (user_id, material_id) VALUES (?, ?)",
+                (user_id, material_id)
+            )
+            await db.execute("UPDATE users SET coins = coins + 5 WHERE user_id = ?", (user_id,))
+
+            # Получаем новый баланс
+            cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
+            coins = (await cursor.fetchone())[0]
+
+            await db.commit()  # <--- commit внутри блока
+
+        # Теперь вне блока отправляем сообщение о балансе
+        await message.answer(
+            f"✅ +5 монет! Теперь у вас {coins} монет.\n\n"
+            f"📊 Сегодня изучено: {today_count + 1}/{MAX_DAILY_MATERIALS}"
+        )
+        await back_to_main(message, state)
+
     except Exception as e:
-        logger.error(f"Ошибка отправки методички: {e}")
-        await message.answer("Не удалось загрузить методичку.")
-        return
-
-    # 5. Отмечаем изученной и начисляем монеты
-    await mark_material_studied(user_id, material_id)
-    await add_coins(user_id, 5)
-
-    # 6. Показываем новый баланс
-    async with aiosqlite.connect(TESTS_DB) as db:
-        cursor = await db.execute("SELECT coins FROM users WHERE user_id=?", (user_id,))
-        row = await cursor.fetchone()
-        coins = row[0] if row else 0
-
-    await message.answer(f"✅ +5 монет! Теперь у вас **{coins}** монет.\n\n📊 Сегодня изучено: {today_count + 1}/{MAX_DAILY_MATERIALS}")
-
-    # 7. Возвращаем в главное меню
-    await back_to_main(message, state)
+        logger.error(f"Ошибка в study_material: {e}")
+        await message.answer("Произошла ошибка. Попробуйте позже.")
 
 # ======================================================
 # MINI-APP TESTS (WebApp)
